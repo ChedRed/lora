@@ -65,6 +65,8 @@ struct State {
     
     current_time: chrono::DateTime<chrono::Utc>,
     last_time: chrono::DateTime<chrono::Utc>,
+    timestep: chrono::DateTime<chrono::Utc>,
+    delta: chrono::TimeDelta,
     surface: wgpu::Surface<'static>,
     surface_format: wgpu::TextureFormat,
     msaa_view: wgpu::TextureView,
@@ -359,7 +361,7 @@ impl State {
 
         let gravity = Vec2 { x: 0., y: 0. };
         let mut integration_parameters = IntegrationParameters::default();
-        integration_parameters.dt = 1./60.;
+        integration_parameters.dt = 1./100.;
         
         let physics = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
@@ -376,6 +378,8 @@ impl State {
 
             current_time: chrono::Utc::now(),
             last_time: chrono::Utc::now(),
+            timestep: chrono::Utc::now(),
+            delta: chrono::TimeDelta::new(0, 10_000_000).unwrap(),
             surface,
             surface_format,
             msaa_view,
@@ -538,25 +542,27 @@ impl State {
 
     fn render(&mut self) {
         self.current_time = chrono::Utc::now();
-        
-        self.integration_parameters.dt = self.current_time.signed_duration_since(self.last_time).as_seconds_f32();
-        _= self.lori_call.send(MainToLoriCall::Update { delta: self.integration_parameters.dt });
-        self.handle_lori_loop();
-        
-        self.physics.step(
-            self.gravity,
-            &self.integration_parameters,
-            &mut self.island_manager,
-            &mut self.broad_phase,
-            &mut self.narrow_phase,
-            &mut self.rigidbodies,
-            &mut self.colliders,
-            &mut self.impulse_joints,
-            &mut self.multibody_joints,
-            &mut self.ccd_solver,
-            &(),
-            &(),
-        );
+
+        while self.timestep < self.current_time {
+            _= self.lori_call.send(MainToLoriCall::Update { delta: self.integration_parameters.dt });
+            self.handle_lori_loop();
+            
+            self.physics.step(
+                self.gravity,
+                &self.integration_parameters,
+                &mut self.island_manager,
+                &mut self.broad_phase,
+                &mut self.narrow_phase,
+                &mut self.rigidbodies,
+                &mut self.colliders,
+                &mut self.impulse_joints,
+                &mut self.multibody_joints,
+                &mut self.ccd_solver,
+                &(),
+                &(),
+            );
+            self.timestep += self.delta;
+        }
 
         let surface_texture = self.surface.get_current_texture();
         

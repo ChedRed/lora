@@ -1,4 +1,3 @@
-JumpLock = false
 
 function lori.load()
     lori.set.window.title("Lori Test Application")
@@ -11,6 +10,11 @@ function lori.load()
     PlayerSpawner = lori.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(0, 0, 0)
 
+    PlayertwoShape = lori.new.shape("rectangle", 32, 32, { 0, 1, 0, 1 })
+    PlayertwoCollider = lori.new.collider(PlayertwoShape, "diaxial")
+    PlayertwoSpawner = lori.new.spawner(PlayertwoShape, PlayertwoCollider)
+    PlayertwoObject = PlayertwoSpawner:spawn(10, 0, 0)
+
     MapShape = lori.new.shape("rectangle", 2000, 10, { 0, 0, 1, 1 })
     MapCollider = lori.new.collider(MapShape, "static")
     MapSpawner = lori.new.spawner(MapShape, MapCollider)
@@ -18,9 +22,6 @@ function lori.load()
 end
 
 function lori.keyreleased(key)
-    if key == "w" then
-        JumpLock = false
-    end
     if key == "e" then
         print(lori.get.camera.position()[1])
     end
@@ -28,10 +29,7 @@ end
 
 function lori.update(delta)
     if lori.get.key.state("w") then
-        if JumpLock == false then
-            PlayerObject:move(0, 200)
-            JumpLock = true
-        end
+        PlayerObject:move(0, 20)
     end
     if lori.get.key.state("s") then
         PlayerObject:move(0, -10)
@@ -41,5 +39,18 @@ function lori.update(delta)
     end
     if lori.get.key.state("d") then
         PlayerObject:move(10, 0)
+    end
+
+    if lori.get.key.state("i") then
+        PlayertwoObject:move(0, 20)
+    end
+    if lori.get.key.state("k") then
+        PlayertwoObject:move(0, -10)
+    end
+    if lori.get.key.state("j") then
+        PlayertwoObject:move(-10, 0)
+    end
+    if lori.get.key.state("l") then
+        PlayertwoObject:move(10, 0)
     end
 end
