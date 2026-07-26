@@ -37,25 +37,25 @@ function lori.update(delta)
         PlayerObject:move(0, 20)
     end
     if lori.get.key.state("s") then
-        PlayerObject:move(0, -10)
+        PlayerObject:push(0, -10)
     end
     if lori.get.key.state("a") then
-        PlayerObject:move(-10, 0)
+        PlayerObject:push(-1000, 0)
     end
     if lori.get.key.state("d") then
-        PlayerObject:move(10, 0)
+        PlayerObject:push(1000, 0)
     end
 
     if lori.get.key.state("i") then
         PlayertwoObject:move(0, 20)
     end
     if lori.get.key.state("k") then
-        PlayertwoObject:move(0, -10)
+        PlayertwoObject:push(0, -1000)
     end
     if lori.get.key.state("j") then
-        PlayertwoObject:move(-10, 0)
+        PlayertwoObject:push(-1000, 0)
     end
     if lori.get.key.state("l") then
-        PlayertwoObject:move(10, 0)
+        PlayertwoObject:push(1000, 0)
     end
 end

@@ -21,7 +21,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lori.get.camera.position() -> table[x: number, y: number]
 
 [=] lori.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lori.Shape
-[=] lori.new.mesh(vertices: Vertex[], indices: int[] | nil) -> lori.Shape
+[=] lori.new.mesh(vertices: [number[]], indices: int[] | nil) -> lori.Shape
 [ ] lori.new.image(image: string, scale: number) -> lori.Shape
 [ ] lori.new.border(points: Point[]) -> lori.Border
 [=] lori.new.collider(shape: lori.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lori.Collider
@@ -50,7 +50,15 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lori.Object.move(x: number, y: number) -> nil
 [=] lori.Object.push(x: number, y: number) -> nil
 [=] lori.Object.pull(x1: number, y1: number, x2: number, y2: number) -> nil
-[ ] lori.Object.delete() -> nil
+lori.Object.rotate(r: number) -> nil
+lori.Object.enable() -> nil
+lori.Object.disable() -> nil
+lori.Object.toggle() -> nil
+lori.Object.delete() -> nil
+
+lori.Border.enable() -> nil
+lori.Border.disable() -> nil
+lori.Border.toggle() -> nil
 ```
 
 ```
@@ -82,8 +90,10 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 TODO:
 - Enforce at least one physics tick before rendering, unless lori.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
-- Add safeguard to prevent pushing static objects, or objects without colliders
+- Add safeguard to prevent pushing static objects, or objects without colliders (or at least warning)
 
 - Refactor
 - Handle exceptions for when lori.update and/or lori.render is not present
+- Make github workflow work
+- Add friction, density, etc. as well as ticks/second and _ lua-changeable
 ```
