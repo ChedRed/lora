@@ -36,6 +36,10 @@ pub enum LoriToMainCommand {
         h: f32,
         color: [f32; 4],
     },
+    NewMesh {
+        vertices: Vec<[f32; 8]>,
+        indices: Vec<u32>,
+    },
     NewCollider {
         shape: LoriShapeRef,
         collision: String,
@@ -96,6 +100,9 @@ pub enum MainToLoriCommand {
     ReturnNewShape {
         shape: LoriShapeRef,
     },
+    ReturnNewMesh {
+        mesh: LoriShapeRef,
+    },
     ReturnNewCollider {
         collider: LoriColliderRef,
     },
@@ -105,6 +112,7 @@ pub enum MainToLoriCommand {
     ReturnNewObject {
         object: LoriObjectRef,
     },
+    Return,
 }
 
 pub enum MainToLoriCall {

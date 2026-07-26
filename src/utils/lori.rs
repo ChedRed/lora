@@ -3,7 +3,7 @@ use std::process::exit;
 use crossbeam::channel::{Receiver, Sender};
 use mlua::{Function, UserDataRef};
 
-use crate::{content::{collider::LoriColliderRef, shape::LoriShapeRef, spawner::LoriSpawnerRef}, utils::{LoriToMainCall, LoriToMainCommand, MainToLoriCall, MainToLoriCommand, print::{serorln, vbosln}}};
+use crate::{content::{collider::LoriColliderRef, shape::LoriShapeRef, spawner::LoriSpawnerRef}, utils::{LoriToMainCall, LoriToMainCommand, MainToLoriCall, MainToLoriCommand, print::{dbugln, serorln, vbosln}}};
 
 pub struct Lori {
     _lua: mlua::Lua,
@@ -28,35 +28,40 @@ impl Lori {
         let lori = _lua.create_table().unwrap();
     
         let set = _lua.create_table().unwrap();
-        _= set.set("gravity", _lua.create_function({let tx = main_cmd.clone(); // lori.set.window.size
+        _= set.set("gravity", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.size
             move |_, (x, y)| {
                 _= tx.send(LoriToMainCommand::SetGravity { x, y });
+                _= rx.recv();
                 Ok(())
             }
         }).unwrap());
         let set_window = _lua.create_table().unwrap();
-        _= set_window.set("title", _lua.create_function({let tx = main_cmd.clone(); // lori.set.window.title
+        _= set_window.set("title", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.title
             move |_, text| {
                 _= tx.send(LoriToMainCommand::SetWindowTitle { text });
+                _= rx.recv();
                 Ok(())
             }
         }).unwrap());
-        _= set_window.set("size", _lua.create_function({let tx = main_cmd.clone(); // lori.set.window.size
+        _= set_window.set("size", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.size
             move |_, (w, h)| {
                 _= tx.send(LoriToMainCommand::SetWindowSize { w, h });
+                _= rx.recv();
                 Ok(())
             }
         }).unwrap());
-        _= set_window.set("resizable", _lua.create_function({let tx = main_cmd.clone(); // lori.set.window.resizable
+        _= set_window.set("resizable", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.resizable
             move |_, is| {
                 _= tx.send(LoriToMainCommand::SetWindowResizable { is });
+                _= rx.recv();
                 Ok(())
             }
         }).unwrap());
         let set_camera = _lua.create_table().unwrap();
-        _= set_camera.set("position", _lua.create_function({let tx = main_cmd.clone(); // lori.set.window.size
+        _= set_camera.set("position", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.size
             move |_, (x, y)| {
                 _= tx.send(LoriToMainCommand::SetCameraPosition { x, y });
+                _= rx.recv();
                 Ok(())
             }
         }).unwrap());
@@ -134,6 +139,24 @@ impl Lori {
                 Ok(new_shape)
             }
         }).unwrap());
+        _= new.set("mesh", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.new.shape
+            move |_, (vertices, indices): (Vec<[f32; 8]>, Vec<u32>)| {
+                dbugln("eaeae");
+                _= tx.send(LoriToMainCommand::NewMesh { vertices: vertices.clone(), indices });
+                let mut new_shape: Option<LoriShapeRef> = None;
+                while let Ok(cmd) = rx.recv() {
+                    match cmd {
+                        MainToLoriCommand::ReturnNewMesh { mesh } => {
+                            new_shape = Some(mesh);
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+                
+                Ok(new_shape)
+            }
+        }).unwrap());
         _= new.set("collider", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.new.collider
             move |_, (shape, collision): (UserDataRef<LoriShapeRef>, String)| {
                 _= tx.send(LoriToMainCommand::NewCollider { shape: shape.clone(), collision });
@@ -170,21 +193,24 @@ impl Lori {
         }).unwrap());
         
         let draw = _lua.create_table().unwrap();
-        _= draw.set("rect", _lua.create_function({let tx = main_cmd.clone(); // lori.draw.rect
+        _= draw.set("rect", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.draw.rect
             move |_, (x, y, w, h, r, color)| {
             _= tx.send(LoriToMainCommand::DrawPrimitive { x, y, w, h, r, color, label: 0 });
+            _= rx.recv();
             Ok(())
         }
         }).unwrap());
-        _= draw.set("circle", _lua.create_function({let tx = main_cmd.clone(); // lori.draw.circle
+        _= draw.set("circle", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.draw.circle
             move |_, (x, y, r, color)| {
             _= tx.send(LoriToMainCommand::DrawPrimitive { x, y, w: 0., h: 0., r, color, label: 1 });
+            _= rx.recv();
             Ok(())
         }
         }).unwrap());
-        _= draw.set("line", _lua.create_function({let tx = main_cmd.clone(); // lori.draw.line
+        _= draw.set("line", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.draw.line
             move |_, (x1, y1, x2, y2, r, color)| {
             _= tx.send(LoriToMainCommand::DrawPrimitive { x: x1, y: y1, w: x2, h: y2, r, color, label: 2 });
+            _= rx.recv();
             Ok(())
         }
         }).unwrap());

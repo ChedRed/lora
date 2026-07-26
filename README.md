@@ -10,18 +10,18 @@ This project has just begun, and I'm hoping it would become a viable alternative
 Functions with '=' or '-' are implemented, with '-' meaning untested.
 ```
 [=] lori.set.window.title(text: string) -> nil
-[-] lori.set.window.size(w: int, h: int) -> nil
+[=] lori.set.window.size(w: int, h: int) -> nil
 [=] lori.set.window.resizable(is: bool) -> nil
 [=] lori.set.gravity(x: number, y: number) -> nil
 [=] lori.set.camera.position(x, y) -> nil
 
 [=] lori.get.window.size() -> table[w: int, h: int]
 [=] lori.get.key.state(key: string) -> bool
-[ ] lori.get.mouse.position() -> table[x: number, y: number]
-[ ] lori.get.camera.position() -> table[x: number, y: number]
+[=] lori.get.mouse.position() -> table[x: number, y: number]
+[=] lori.get.camera.position() -> table[x: number, y: number]
 
 [=] lori.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lori.Shape
-[ ] lori.new.mesh(vertices: Vertex[], indices: int[] | nil) -> lori.Shape
+[=] lori.new.mesh(vertices: Vertex[], indices: int[] | nil) -> lori.Shape
 [ ] lori.new.image(image: string, scale: number) -> lori.Shape
 [ ] lori.new.border(points: Point[]) -> lori.Border
 [=] lori.new.collider(shape: lori.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lori.Collider
@@ -83,7 +83,7 @@ TODO:
 - Enforce at least one physics tick before rendering, unless lori.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
 - Add safeguard to prevent pushing static objects, or objects without colliders
-- Make nil lori functions sequential
 
-- I don't like the proportions for physics.
+- Refactor
+- Handle exceptions for when lori.update and/or lori.render is not present
 ```

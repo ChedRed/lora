@@ -9,6 +9,8 @@ chrono = "0.4.45"
 clap = { version = "4.6.2", features = ["derive"] }
 colored = "3.1.1"
 crossbeam = "0.8.4"
+glyphon = "0.12.0"
+kira = "0.12.2"
 mlua = { version = "0.12.0", features = ["luajit52", "send"] }
 pollster = "1.0.1"
 rapier2d = { version="0.34.0", features = ["parallel"] }

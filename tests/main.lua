@@ -3,10 +3,15 @@ function lori.load()
     lori.set.window.title("Lori Test Application")
 
     lori.set.gravity(0, -1000)
-    lori.set.camera.position(100, 100)
 
-    PlayerShape = lori.new.shape("rectangle", 32, 32, { 1, 0, 0, 1 })
-    PlayerCollider = lori.new.collider(PlayerShape, "diaxial")
+    PlayerShape = lori.new.mesh({
+        { 0., 0., 0., 0., 1., 0., 0., 1. },
+        { -6.4, 25.6, 0., 0., 1., 0., 0., 1. },
+        { 32., 0., 0., 0., 1., 0., 0., 1. },
+        { 16, 40, 0., 0., 1., 0., 0., 1. },
+        { 38.4, 25.6, 0., 0., 1., 0., 0., 1. },
+    }, { 0, 1, 2, 3, 4 })
+    PlayerCollider = lori.new.collider(PlayerShape, "dynamic")
     PlayerSpawner = lori.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(0, 0, 0)
 

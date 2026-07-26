@@ -5,14 +5,9 @@
 --- @class Lori
 Lori = {
     --- @class Vertex
-    --- @field x number
-    --- @field y number
-    --- @field u number
-    --- @field v number
-    --- @field r number
-    --- @field g number
-    --- @field b number
-    --- @field a number
+    --- @field position number[]
+    --- @field uv number[]
+    --- @field color number[]
     Vertex = {},
 
     --- @class Point
@@ -216,7 +211,7 @@ Lori = {
         --- @param color number[]
         --- @return Shape
         shape = function(type, w, h, color) return Lori.Shape end,
-        --- @param vertices Vertex[]
+        --- @param vertices [number[]]
         --- @param indices integer[] | nil
         --- @return Shape
         mesh = function(vertices, indices) return Lori.Shape end,

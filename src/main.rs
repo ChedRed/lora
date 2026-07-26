@@ -602,7 +602,7 @@ impl State {
 
         renderpass.set_bind_group(0, &self.gpu_view_bind_group, &[]);
         
-        for obj in self.lori_spawners.iter_mut() { // Draw each shape
+        for obj in self.lori_spawners.iter_mut() { // Draw each shape. TODO: move to separate function
             if obj.1.renderable() {
                 if let Some(real_vertex_buffer) = &obj.1.vertex_buffer {
                     if let Some(real_location_buffer) = &obj.1.location_buffer {
@@ -663,31 +663,35 @@ impl State {
         match v {
             LoriToMainCommand::SetWindowTitle { text } => {
                 self.window.set_title(text.as_str());
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::SetWindowSize { w, h } => {
-                // if let Some(_) = self.window.request_inner_size(PhysicalSize { width: w, height: h }) {
-                //     self.resize(PhysicalSize { width: w, height: h });
-                // } // TODO: Wait...
                 _= self.window.request_inner_size(PhysicalSize { width: w, height: h });
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::SetWindowResizable { is } => {
                 _= self.window.set_resizable(is);
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::SetGravity { x, y } => {
                 self.gravity = Vec2 { x, y };
-                dbugln("Gravity set");
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::SetCameraPosition { x, y } => {
                 self.gpu_view.position = [x, y];
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::GetWindowSize => {
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnGetWindowSize { w: self.size.width, h: self.size.height });
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             },
             LoriToMainCommand::GetKeyPressed { key } => {
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnKeyPressed { key: self.keys.contains(&key) });
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::GetCameraPosition => {
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnCameraPosition { x: self.gpu_view.position[0], y: self.gpu_view.position[1] });
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::NewShape { kind, w, h, color } => {
                 let mut vertices: Vec<Vertex> = Vec::new();
@@ -706,7 +710,18 @@ impl State {
                 self.lori_shapes.insert(self.shape_id, LoriShape::new(vertices, indices));
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewShape { shape: LoriShapeRef { uid: self.shape_id, tx: self.lori_cmd_rev.clone() } });
                 self.shape_id += 1;
-            },
+            }
+            LoriToMainCommand::NewMesh { vertices, indices } => {
+                sdbugln(format!("{}", vertices.len()));
+                let mut new_vertices: Vec<Vertex> = Vec::new();
+                for vertex in vertices {
+                    new_vertices.push(Vertex { position: [vertex[0], vertex[1]], uv: [vertex[2], vertex[3]], color: [vertex[4], vertex[5], vertex[6], vertex[7]] });
+                }
+                
+                self.lori_shapes.insert(self.shape_id, LoriShape::new(new_vertices, indices));
+                _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewMesh { mesh: LoriShapeRef { uid: self.shape_id, tx: self.lori_cmd_rev.clone() } });
+                self.shape_id += 1;
+            }
             LoriToMainCommand::NewCollider { shape, collision } => {
                 let real_shape: &LoriShape = self.lori_shapes.get(&shape.uid).unwrap();
                 let vertices: Vec<Vertex> = real_shape.vertices.clone();
@@ -715,7 +730,7 @@ impl State {
                 self.lori_colliders.insert(self.collider_id, LoriCollider::new(vertices, indices, collision));
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewCollider { collider: LoriColliderRef { uid: self.collider_id, tx: self.lori_cmd_rev.clone() } });
                 self.collider_id += 1;
-            },
+            }
             LoriToMainCommand::NewSpawner { shape, collider } => {
                 let mut final_shape: Option<LoriShape> = None;
                 let mut final_collider: Option<LoriCollider> = None;
@@ -730,15 +745,15 @@ impl State {
                 self.lori_spawners.insert(self.spawner_id, LoriSpawner::new(&self.device, final_shape, final_collider));
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewSpawner { spawner: LoriSpawnerRef { uid: self.spawner_id, tx: self.lori_cmd_rev.clone(), rx: self.lori_rtrn_rev.clone() } });
                 self.spawner_id += 1;
-            },
+            }
             LoriToMainCommand::DrawPrimitive { x, y, w, h, r, color, label } => {
                 self.primitives.push(Primitive { xywh: [x, y, w, h], angle: r, label, _pad0: 0, _pad1: 0, color });
-            },
+            }
             LoriToMainCommand::SpawnerSpawn { uid, x, y, r } => {
                 let spawner: &mut LoriSpawner = self.lori_spawners.get_mut(&uid).unwrap();
                 let ouid: u64 = spawner.spawn(x, y, r, &mut self.rigidbodies, &mut self.colliders);
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewObject { object: LoriObjectRef { puid: uid, uid: ouid, tx: self.lori_cmd_rev.clone() } })
-            },
+            }
             LoriToMainCommand::ObjectMove { puid, uid, x, y } => {
                 let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
@@ -747,7 +762,8 @@ impl State {
                         body.apply_impulse(Vector2 { x, y }, true);
                     }
                 }
-            },
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
             LoriToMainCommand::ObjectPush { puid, uid, x, y } => {
                 let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
@@ -756,7 +772,8 @@ impl State {
                         body.add_force(Vector2 { x, y }, true);
                     }
                 }
-            },
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
             LoriToMainCommand::ObjectPull { puid, uid, x1, y1, x2, y2 } => {
                 let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
@@ -765,6 +782,7 @@ impl State {
                         body.add_force_at_point(Vector2 { x: x1, y: y1 }, Vector2 { x: x2, y: y2 }, true);
                     }
                 }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
         }
     }
@@ -778,9 +796,6 @@ impl State {
                     }
                 }
                 recv(self.lori_back) -> _ => {
-                    while let Ok(cmd) = self.lori_cmd.try_recv() {
-                        self.handle_lori_commands(cmd);
-                    }
                     break;
                 }
             }
