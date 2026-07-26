@@ -1,6 +1,6 @@
 use chrono::TimeDelta;
 use clap::Parser;
-use crossbeam::{channel::{Receiver, Sender, bounded, unbounded}, select};
+use crossbeam::{channel::{Receiver, Sender, bounded}, select};
 use std::{fs, process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
 use winit::{application::ApplicationHandler, event::MouseScrollDelta};
@@ -156,8 +156,8 @@ impl State {
         let cap = surface.get_capabilities(&adapter);
         let surface_format = cap.formats[0];
 
-        let (main_cmd, lori_cmd) = unbounded::<LoriToMainCommand>();
-        let (lori_rtrn, main_rtrn) = unbounded::<MainToLoriCommand>();
+        let (main_cmd, lori_cmd) = bounded::<LoriToMainCommand>(1);
+        let (lori_rtrn, main_rtrn) = bounded::<MainToLoriCommand>(1);
         let (lori_call, main_call) = bounded::<MainToLoriCall>(0);
         let (main_back, lori_back) = bounded::<LoriToMainCall>(0);
 

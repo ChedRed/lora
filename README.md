@@ -1,9 +1,9 @@
 # lori
 
 
-Atrocious naming aside, this Lua library uses Rust's wgpu and winit libraries under the hood, meaning it is extremely fast and capable. At the same time, much of the hard programming is abstracted away into simple Lua functions such as ``lori.set.window.size(..)`` or ``lori.delete.object(..)``. Additionally, Rust's rapier2d library is used to handle physics, which has much better performance in complicated scenarios than box2d!
+LORI is a Lua framework that uses Rust's wgpu and winit libraries under the hood, meaning it is extremely fast and capable. At the same time, much of the hard programming is abstracted away into simple Lua functions such as ``lori.set.window.size(..)`` or ``lori.new.object(..)``. Additionally, Rust's rapier2d library is used to handle physics, which has much better performance in complicated scenarios than box2d!
 
-This project has just begun, and I'm hoping it would become a viable alternative to LOVE which, although I do love it, uses the slower OpenGL backend and Box2D physics engine.
+Soon enough there will be a [web url](lori.ched.red) that will hold the docs and more information about the project! For now, however, it is not up, and I'm not quite ready to publish this project.
 
 ## Functions
 
@@ -49,7 +49,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lori.Object.get_angle() -> number
 [=] lori.Object.impulse(x: number, y: number) -> nil
 [=] lori.Object.add_force(x: number, y: number) -> nil
-[-] lori.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
+[=] lori.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
 [=] lori.Object.add_torque(r: number) -> nil
 [=] lori.Object.enable() -> nil
 [=] lori.Object.disable() -> nil
@@ -75,13 +75,11 @@ lori.Border.toggle() -> nil
 
 ```
 [ ] Font
-[ ] Point
 [=] Shape
 [ ] Sound
 [=] Spawner
 [ ] Border
 [=] Object
-[ ] Vertex
 [=] Collider
 ```
 
@@ -96,4 +94,5 @@ TODO:
 - Make github workflow work
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
 - Change physics ratio
+- Custom shaders?
 ```

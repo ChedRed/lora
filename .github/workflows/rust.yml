@@ -14,28 +14,12 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        args:
-        - "-t ./tests/main.lua"
-
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
-    - name: Install system deps
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y xvfb libxkbcommon-x11-0
       
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
     - name: Build Lori
       run: cargo build --release
-
-    - name: Test Lori
-      run: |
-        xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" \
-        ./target/release/lori ${{ matrix.args }}

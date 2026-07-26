@@ -44,9 +44,6 @@ Lori = {
         --- @param r number
         --- @return Object
         spawn = function(self, x, y, r) return Lori.Object end,
-        --- @param self Spawner
-        --- @return nil
-        erradicate = function(self) end,
     },
 
     --- @class Object
@@ -106,9 +103,6 @@ Lori = {
         --- @param self Object
         --- @return nil
         toggle = function(self) end,
-        --- @param self Object
-        --- @return nil
-        delete = function(self) end,
     },
 
     --- @class Sound
