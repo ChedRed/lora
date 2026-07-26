@@ -1,5 +1,5 @@
 [package]
-name = "lori"
+name = "lora"
 authors = ["Ryan Chou"]
 description = "A simple Lua framework for making complex games!"
 version = "0.1.0"
@@ -7,7 +7,7 @@ edition = "2024"
 license-file = "LICENSE"
 readme = "README.md"
 # homepage = "ched.red"
-repository = "https://github.com/ChedRed/lori"
+repository = "https://github.com/ChedRed/lora"
 
 [dependencies]
 bytemuck = { version = "1.25.0", features = ["derive"] }
