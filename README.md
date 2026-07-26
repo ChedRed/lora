@@ -1,76 +1,76 @@
-# lori
+# lora
 
 
-LORI is a Lua framework that uses Rust's wgpu and winit libraries under the hood, meaning it is extremely fast and capable. At the same time, much of the hard programming is abstracted away into simple Lua functions such as ``lori.set.window.size(..)`` or ``lori.new.object(..)``. Additionally, Rust's rapier2d library is used to handle physics, which has much better performance in complicated scenarios than box2d!
+LORA is a Lua framework that uses Rust's wgpu and winit libraries under the hood, meaning it is extremely fast and capable. At the same time, much of the hard programming is abstracted away into simple Lua functions such as ``lora.set.window.size(..)`` or ``lora.new.object(..)``. Additionally, Rust's rapier2d library is used to handle physics, which has much better performance in complicated scenarios than box2d!
 
-Soon enough there will be a [web url](lori.ched.red) that will hold the docs and more information about the project! For now, however, it is not up, and I'm not quite ready to publish this project.
+Soon enough there will be a [web url](lora.ched.red) that will hold the docs and more information about the project! For now, however, it is not up, and I'm not quite ready to publish this project.
 
 ## Functions
 
 Functions with '=' or '-' are implemented, with '-' meaning untested.
 ```
-[=] lori.set.window.title(text: string) -> nil
-[=] lori.set.window.size(w: int, h: int) -> nil
-[=] lori.set.window.resizable(is: bool) -> nil
-[=] lori.set.physics.gravity(x: number, y: number) -> nil
-[=] lori.set.physics.hertz(hz: number) -> nil
-[=] lori.set.camera.position(x: number, y: number) -> nil
+[=] lora.set.window.title(text: string) -> nil
+[=] lora.set.window.size(w: int, h: int) -> nil
+[=] lora.set.window.resizable(is: bool) -> nil
+[=] lora.set.physics.gravity(x: number, y: number) -> nil
+[=] lora.set.physics.hertz(hz: number) -> nil
+[=] lora.set.camera.position(x: number, y: number) -> nil
 
-[=] lori.get.window.size() -> table[w: int, h: int]
-[=] lori.get.key.state(key: string) -> bool
-[=] lori.get.mouse.position() -> table[x: number, y: number]
-[=] lori.get.camera.position() -> table[x: number, y: number]
+[=] lora.get.window.size() -> table[w: int, h: int]
+[=] lora.get.key.state(key: string) -> bool
+[=] lora.get.mouse.position() -> table[x: number, y: number]
+[=] lora.get.camera.position() -> table[x: number, y: number]
 
-[=] lori.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lori.Shape
-[=] lori.new.mesh(vertices: [number[]], indices: int[] | nil) -> lori.Shape
-[ ] lori.new.image(image: string, scale: number) -> lori.Shape
-[ ] lori.new.border(points: Point[]) -> lori.Border
-[=] lori.new.collider(shape: lori.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lori.Collider
-[=] lori.new.spawner(shape: lori.Shape | nil, collider: lori.Collider | nil) -> lori.Spawner
-[ ] lori.new.sound(sound: String) -> lori.Sound
-[ ] lori.new.font(font: String) -> lori.Font
+[=] lora.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lora.Shape
+[=] lora.new.mesh(vertices: [number[]], indices: int[] | nil) -> lora.Shape
+[ ] lora.new.image(image: string, scale: number) -> lora.Shape
+[ ] lora.new.border(points: Point[]) -> lora.Border
+[=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
+[=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
+[ ] lora.new.sound(sound: String) -> lora.Sound
+[ ] lora.new.font(font: String) -> lora.Font
 
-[=] lori.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
-[=] lori.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil
-[=] lori.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
-[ ] lori.draw.text(x: number, y: number, text: String, font: lori.Font | nil) -> nil
+[=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
+[=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil
+[=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
+[ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil
 
-[ ] lori.Sound.play(volume: number, pitch: number) -> nil
-[ ] lori.Sound.loop(count: number) -> nil
-[ ] lori.Sound.stop() -> nil
+[ ] lora.Sound.play(volume: number, pitch: number) -> nil
+[ ] lora.Sound.loop(count: number) -> nil
+[ ] lora.Sound.stop() -> nil
 
-[=] lori.Spawner.spawn(x, y, r) -> lori.Object
+[=] lora.Spawner.spawn(x, y, r) -> lora.Object
 
-[=] lori.Object.set_position(x: number, y: number) -> nil
-[=] lori.Object.set_motion(x: number, y: number) -> nil
-[=] lori.Object.set_angle(r: number) -> nil
-[=] lori.Object.get_position() -> table[x: number, y: number]
-[=] lori.Object.get_motion() -> table[x: number, y: number]
-[=] lori.Object.get_angle() -> number
-[=] lori.Object.impulse(x: number, y: number) -> nil
-[=] lori.Object.add_force(x: number, y: number) -> nil
-[=] lori.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
-[=] lori.Object.add_torque(r: number) -> nil
-[=] lori.Object.enable() -> nil
-[=] lori.Object.disable() -> nil
-[=] lori.Object.toggle() -> nil
+[=] lora.Object.set_position(x: number, y: number) -> nil
+[=] lora.Object.set_motion(x: number, y: number) -> nil
+[=] lora.Object.set_angle(r: number) -> nil
+[=] lora.Object.get_position() -> table[x: number, y: number]
+[=] lora.Object.get_motion() -> table[x: number, y: number]
+[=] lora.Object.get_angle() -> number
+[=] lora.Object.impulse(x: number, y: number) -> nil
+[=] lora.Object.add_force(x: number, y: number) -> nil
+[=] lora.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
+[=] lora.Object.add_torque(r: number) -> nil
+[=] lora.Object.enable() -> nil
+[=] lora.Object.disable() -> nil
+[=] lora.Object.toggle() -> nil
 
-lori.Border.enable() -> nil
-lori.Border.disable() -> nil
-lori.Border.toggle() -> nil
+lora.Border.enable() -> nil
+lora.Border.disable() -> nil
+lora.Border.toggle() -> nil
 ```
 
 ```
-[=] lori.load() -> nil
-[=] lori.keypressed(key) -> nil
-[=] lori.keyreleased(key) -> nil
-[=] lori.mousepressed(x, y, button) -> nil
-[=] lori.mousereleased(x, y, button) -> nil
-[=] lori.mousemoved(x, y) -> nil
-[=] lori.mousescrolled(x, y) -> nil
-[=] lori.update() -> nil
-[=] lori.render() -> nil
-[=] lori.exit() -> nil
+[=] lora.load() -> nil
+[=] lora.keypressed(key) -> nil
+[=] lora.keyreleased(key) -> nil
+[=] lora.mousepressed(x, y, button) -> nil
+[=] lora.mousereleased(x, y, button) -> nil
+[=] lora.mousemoved(x, y) -> nil
+[=] lora.mousescrolled(x, y) -> nil
+[=] lora.update() -> nil
+[=] lora.render() -> nil
+[=] lora.exit() -> nil
 ```
 
 ```
@@ -85,12 +85,12 @@ lori.Border.toggle() -> nil
 
 ```
 TODO:
-- Enforce at least one physics tick before rendering, unless lori.update is not present
+- Enforce at least one physics tick before rendering, unless lora.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
 - Add safeguard to prevent pushing static objects, or objects without colliders (or at least warning)
 
 - Refactor
-- Handle exceptions for when lori.update and/or lori.render is not present
+- Handle exceptions for when lora.update and/or lora.render is not present
 - Make github workflow work
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
 - Change physics ratio
