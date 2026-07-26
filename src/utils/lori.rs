@@ -88,7 +88,7 @@ impl Lori {
                             nh = h;
                             break;
                         }
-                        _ => {}
+                        _ => {dbugln("GetWindowSize dump")}
                     }
                 }
                 Ok((nw, nh))
@@ -105,7 +105,7 @@ impl Lori {
                             pressed = key;
                             break;
                         }
-                        _ => {}
+                        _ => {dbugln("GetKeyState dump")}
                     }
                 }
                 Ok(pressed)
@@ -122,7 +122,7 @@ impl Lori {
                             position = [x, y];
                             break;
                         }
-                        _ => {}
+                        _ => {dbugln("GetCameraPosition dump")}
                     }
                 }
                 Ok(position)
@@ -140,7 +140,7 @@ impl Lori {
                             new_shape = Some(shape);
                             break;
                         }
-                        _ => {}
+                        _ => {dbugln("NewShape dump")}
                     }
                 }
                 
@@ -149,7 +149,6 @@ impl Lori {
         }).unwrap());
         _= new.set("mesh", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.new.mesh
             move |_, (vertices, indices): (Vec<[f32; 8]>, Vec<u32>)| {
-                dbugln("eaeae");
                 _= tx.send(LoriToMainCommand::NewMesh { vertices: vertices.clone(), indices });
                 let mut new_shape: Option<LoriShapeRef> = None;
                 while let Ok(cmd) = rx.recv() {
@@ -158,7 +157,7 @@ impl Lori {
                             new_shape = Some(mesh);
                             break;
                         }
-                        _ => {}
+                        _ => {dbugln("NewMesh dump")}
                     }
                 }
                 
@@ -175,7 +174,7 @@ impl Lori {
                             new_collider = Some(collider);
                             break;
                         }
-                        _ => {}
+                        _ => {dbugln("NewCollider dump")}
                     }
                 }
                 
@@ -192,7 +191,7 @@ impl Lori {
                         new_spawner = Some(spawner);
                         break;
                     }
-                    _ => {}
+                    _ => {dbugln("NewSpawner dump")}
                 }
             }
             

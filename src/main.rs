@@ -691,15 +691,12 @@ impl State {
             }
             LoriToMainCommand::GetWindowSize => {
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnGetWindowSize { w: self.size.width, h: self.size.height });
-                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             },
             LoriToMainCommand::GetKeyPressed { key } => {
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnKeyPressed { key: self.keys.contains(&key) });
-                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::GetCameraPosition => {
                 _= self.lori_rtrn.send(MainToLoriCommand::ReturnCameraPosition { x: self.gpu_view.position[0], y: self.gpu_view.position[1] });
-                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::NewShape { kind, w, h, color } => {
                 let mut vertices: Vec<Vertex> = Vec::new();
@@ -720,7 +717,6 @@ impl State {
                 self.shape_id += 1;
             }
             LoriToMainCommand::NewMesh { vertices, indices } => {
-                sdbugln(format!("{}", vertices.len()));
                 let mut new_vertices: Vec<Vertex> = Vec::new();
                 for vertex in vertices {
                     new_vertices.push(Vertex { position: [vertex[0], vertex[1]], uv: [vertex[2], vertex[3]], color: [vertex[4], vertex[5], vertex[6], vertex[7]] });
@@ -756,6 +752,7 @@ impl State {
             }
             LoriToMainCommand::DrawPrimitive { x, y, w, h, r, color, label } => {
                 self.primitives.push(Primitive { xywh: [x, y, w, h], angle: r, label, _pad0: 0, _pad1: 0, color });
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::SpawnerSpawn { uid, x, y, r } => {
                 let spawner: &mut LoriSpawner = self.lori_spawners.get_mut(&uid).unwrap();
