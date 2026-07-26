@@ -51,52 +51,61 @@ Lori = {
 
     --- @class Object
     Object = {
-        set = {
-            --- @param self Object
-            --- @param x number
-            --- @param y number
-            --- @return nil
-            position = function(self, x, y) end,
-            --- @param self Object
-            --- @param x number
-            --- @param y number
-            --- @return nil
-            motion = function(self, x, y) end,
-            --- @param self Object
-            --- @param r number
-            --- @return nil
-            angle = function(self, r) end,
-        },
-        get = {
-            --- @param self Object
-            --- @return number
-            --- @return number
-            position = function(self) return 0, 0 end,
-            --- @param self Object
-            --- @return number
-            --- @return number
-            motion = function(self) return 0, 0 end,
-            --- @param self Object
-            --- @return number
-            angle = function(self) return 0 end,
-        },
         --- @param self Object
         --- @param x number
         --- @param y number
         --- @return nil
-        move = function(self, x, y) end,
+        set_position = function(self, x, y) end,
         --- @param self Object
         --- @param x number
         --- @param y number
         --- @return nil
-        push = function(self, x, y) end,
+        set_motion = function(self, x, y) end,
+        --- @param self Object
+        --- @param r number
+        --- @return nil
+        set_angle = function(self, r) end,
+        --- @param self Object
+        --- @return number
+        --- @return number
+        get_position = function(self) return 0, 0 end,
+        --- @param self Object
+        --- @return number
+        --- @return number
+        get_motion = function(self) return 0, 0 end,
+        --- @param self Object
+        --- @return number
+        get_angle = function(self) return 0 end,
+        --- @param self Object
+        --- @param x number
+        --- @param y number
+        --- @return nil
+        impulse = function(self, x, y) end,
+        --- @param self Object
+        --- @param x number
+        --- @param y number
+        --- @return nil
+        add_force = function(self, x, y) end,
         --- @param self Object
         --- @param x1 number
         --- @param y1 number
         --- @param x2 number
         --- @param y2 number
         --- @return nil
-        pull = function(self, x1, y1, x2, y2) end,
+        add_world_force = function(self, x1, y1, x2, y2) end,
+        --- @param self Object
+        --- @param r number
+        --- @return nil
+        add_torque = function(self, r) end,
+        --- @param self Object
+        --- @return nil
+        enable = function(self) end,
+        --- @param self Object
+        --- @return nil
+        disable = function(self) end,
+        --- @param self Object
+        --- @return nil
+        toggle = function(self) end,
         --- @param self Object
         --- @return nil
         delete = function(self) end,
@@ -171,10 +180,15 @@ Lori = {
             --- @return nil
             resizable = function(is) end,
         },
-        --- @param x number
-        --- @param y number
-        --- @return nil
-        gravity = function(x, y) end,
+        physics = {
+            --- @param x number
+            --- @param y number
+            --- @return nil
+            gravity = function(x, y) end,
+            --- @param hz number
+            --- @return nil
+            hertz = function(hz) end,
+        },
         camera = {
             --- @param x number
             --- @param y number

@@ -17,9 +17,12 @@ pub enum LoriToMainCommand {
     SetWindowResizable {
         is: bool,
     },
-    SetGravity {
+    SetPhysicsGravity {
         x: f32,
         y: f32,
+    },
+    SetPhysicsHertz {
+        hz: f64,
     },
     SetCameraPosition {
         x: f32,
@@ -63,26 +66,72 @@ pub enum LoriToMainCommand {
         y: f32,
         r: f32,
     },
-    ObjectMove {
+    ObjectSetPosition {
         puid: u64,
         uid: u64,
         x: f32,
         y: f32,
     },
-    ObjectPush {
+    ObjectSetMotion {
         puid: u64,
         uid: u64,
         x: f32,
         y: f32,
     },
-    ObjectPull {
+    ObjectSetAngle {
+        puid: u64,
+        uid: u64,
+        r: f32,
+    },
+    ObjectGetPosition {
+        puid: u64,
+        uid: u64,
+    },
+    ObjectGetMotion {
+        puid: u64,
+        uid: u64,
+    },
+    ObjectGetAngle {
+        puid: u64,
+        uid: u64,
+    },
+    ObjectImpulse {
+        puid: u64,
+        uid: u64,
+        x: f32,
+        y: f32,
+    },
+    ObjectAddForce {
+        puid: u64,
+        uid: u64,
+        x: f32,
+        y: f32,
+    },
+    ObjectAddWorldForce {
         puid: u64,
         uid: u64,
         x1: f32,
         y1: f32,
         x2: f32,
         y2: f32,
-    }
+    },
+    ObjectAddTorque {
+        puid: u64,
+        uid: u64,
+        r: f32,
+    },
+    ObjectEnable {
+        puid: u64,
+        uid: u64,
+    },
+    ObjectDisable {
+        puid: u64,
+        uid: u64,
+    },
+    ObjectToggle {
+        puid: u64,
+        uid: u64,
+    },
 }
 
 pub enum MainToLoriCommand {
@@ -111,6 +160,15 @@ pub enum MainToLoriCommand {
     },
     ReturnNewObject {
         object: LoriObjectRef,
+    },
+    ReturnObjectGetPosition {
+        position: [f32; 2],
+    },
+    ReturnObjectGetMotion {
+        motion: [f32; 2],
+    },
+    ReturnObjectGetAngle {
+        angle: f32,
     },
     Return,
 }

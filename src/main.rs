@@ -1,3 +1,4 @@
+use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded, unbounded}, select};
 use std::{fs, process::exit, sync::Arc, thread::JoinHandle};
@@ -616,6 +617,7 @@ impl State {
                                         loc.position = [pos.x, pos.y];
                                         loc.rotation = [rot, 0.];
                                         body.reset_forces(true);
+                                        body.reset_torques(true);
                                     }
                                 }
                             }
@@ -673,8 +675,14 @@ impl State {
                 _= self.window.set_resizable(is);
                 _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
-            LoriToMainCommand::SetGravity { x, y } => {
+            LoriToMainCommand::SetPhysicsGravity { x, y } => {
                 self.gravity = Vec2 { x, y };
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::SetPhysicsHertz { hz } => {
+                let pre_delta: f64 = 1f64/hz;
+                self.delta = TimeDelta::seconds(pre_delta.trunc() as i64) + TimeDelta::nanoseconds((pre_delta.fract() * 1_000_000_000.0) as i64);
+                self.integration_parameters.dt = pre_delta as f32;
                 _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
             LoriToMainCommand::SetCameraPosition { x, y } => {
@@ -752,9 +760,76 @@ impl State {
             LoriToMainCommand::SpawnerSpawn { uid, x, y, r } => {
                 let spawner: &mut LoriSpawner = self.lori_spawners.get_mut(&uid).unwrap();
                 let ouid: u64 = spawner.spawn(x, y, r, &mut self.rigidbodies, &mut self.colliders);
-                _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewObject { object: LoriObjectRef { puid: uid, uid: ouid, tx: self.lori_cmd_rev.clone() } })
+                _= self.lori_rtrn.send(MainToLoriCommand::ReturnNewObject { object: LoriObjectRef { puid: uid, uid: ouid, tx: self.lori_cmd_rev.clone(), rx: self.lori_rtrn_rev.clone() } })
             }
-            LoriToMainCommand::ObjectMove { puid, uid, x, y } => {
+            LoriToMainCommand::ObjectSetPosition { puid, uid, x, y } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.set_translation(Vector2 { x, y }, true);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectSetMotion { puid, uid, x, y } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.set_linvel(Vector2 { x, y }, true);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectSetAngle { puid, uid, r } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.set_rotation(Rot2 { re: r.cos(), im: r.sin() }, true);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectGetPosition { puid, uid } => {
+                let mut position: [f32; 2] = [0., 0.];
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        let pre_position = body.translation();
+                        position[0] = pre_position.x;
+                        position[1] = pre_position.y;
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::ReturnObjectGetPosition { position });
+            }
+            LoriToMainCommand::ObjectGetMotion { puid, uid } => {
+                let mut motion: [f32; 2] = [0., 0.];
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        let pre_motion = body.linvel();
+                        motion[0] = pre_motion.x;
+                        motion[1] = pre_motion.y;
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::ReturnObjectGetMotion { motion });
+            }
+            LoriToMainCommand::ObjectGetAngle { puid, uid } => {
+                let mut angle: f32 = 0.;
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        angle = body.rotation().angle();
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::ReturnObjectGetAngle { angle });
+            }
+            LoriToMainCommand::ObjectImpulse { puid, uid, x, y } => {
                 let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
                 if let Some(real_object) = *object {
@@ -764,7 +839,7 @@ impl State {
                 }
                 _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
-            LoriToMainCommand::ObjectPush { puid, uid, x, y } => {
+            LoriToMainCommand::ObjectAddForce { puid, uid, x, y } => {
                 let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
                 if let Some(real_object) = *object {
@@ -774,12 +849,52 @@ impl State {
                 }
                 _= self.lori_rtrn.send(MainToLoriCommand::Return);
             }
-            LoriToMainCommand::ObjectPull { puid, uid, x1, y1, x2, y2 } => {
+            LoriToMainCommand::ObjectAddWorldForce { puid, uid, x1, y1, x2, y2 } => {
                 let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
                 if let Some(real_object) = *object {
                     if let Some(body) = self.rigidbodies.get_mut(*real_object) {
                         body.add_force_at_point(Vector2 { x: x1, y: y1 }, Vector2 { x: x2, y: y2 }, true);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectAddTorque { puid, uid, r } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.add_torque(r, true);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectEnable { puid, uid } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.set_enabled(true);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectDisable { puid, uid } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.set_enabled(false);
+                    }
+                }
+                _= self.lori_rtrn.send(MainToLoriCommand::Return);
+            }
+            LoriToMainCommand::ObjectToggle { puid, uid } => {
+                let spawner: &LoriSpawner = self.lori_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        body.set_enabled(!body.is_enabled());
                     }
                 }
                 _= self.lori_rtrn.send(MainToLoriCommand::Return);

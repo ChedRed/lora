@@ -28,9 +28,17 @@ impl Lori {
         let lori = _lua.create_table().unwrap();
     
         let set = _lua.create_table().unwrap();
-        _= set.set("gravity", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.size
+        let set_physics = _lua.create_table().unwrap();
+        _= set_physics.set("gravity", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.physics.gravity
             move |_, (x, y)| {
-                _= tx.send(LoriToMainCommand::SetGravity { x, y });
+                _= tx.send(LoriToMainCommand::SetPhysicsGravity { x, y });
+                _= rx.recv();
+                Ok(())
+            }
+        }).unwrap());
+        _= set_physics.set("hertz", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.physics.hertz
+            move |_, hz| {
+                _= tx.send(LoriToMainCommand::SetPhysicsHertz { hz });
                 _= rx.recv();
                 Ok(())
             }
@@ -58,7 +66,7 @@ impl Lori {
             }
         }).unwrap());
         let set_camera = _lua.create_table().unwrap();
-        _= set_camera.set("position", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.window.size
+        _= set_camera.set("position", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.set.camera.position
             move |_, (x, y)| {
                 _= tx.send(LoriToMainCommand::SetCameraPosition { x, y });
                 _= rx.recv();
@@ -139,7 +147,7 @@ impl Lori {
                 Ok(new_shape)
             }
         }).unwrap());
-        _= new.set("mesh", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.new.shape
+        _= new.set("mesh", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lori.new.mesh
             move |_, (vertices, indices): (Vec<[f32; 8]>, Vec<u32>)| {
                 dbugln("eaeae");
                 _= tx.send(LoriToMainCommand::NewMesh { vertices: vertices.clone(), indices });
@@ -215,8 +223,9 @@ impl Lori {
         }
         }).unwrap());
 
-        _= set.set("camera", set_camera);
         _= set.set("window", set_window);
+        _= set.set("physics", set_physics);
+        _= set.set("camera", set_camera);
         
         _= get.set("key", get_key);
         _= get.set("camera", get_camera);

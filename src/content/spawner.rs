@@ -37,20 +37,101 @@ pub struct LoriObjectRef {
     pub puid: u64,
     pub uid: u64,
     pub tx: Sender<LoriToMainCommand>,
+    pub rx: Receiver<MainToLoriCommand>,
 }
 
 impl UserData for LoriObjectRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("move", |_, this, (x, y)| {
-            _= this.tx.send(LoriToMainCommand::ObjectMove { puid: this.puid, uid: this.uid, x, y });
+        methods.add_method("set_position", |_, this, (x, y)| {
+            _= this.tx.send(LoriToMainCommand::ObjectSetPosition { puid: this.puid, uid: this.uid, x, y });
+            _= this.rx.recv();
             Ok(())
         });
-        methods.add_method("push", |_, this, (x, y)| {
-            _= this.tx.send(LoriToMainCommand::ObjectPush { puid: this.puid, uid: this.uid, x, y });
+        methods.add_method("set_motion", |_, this, (x, y)| {
+            _= this.tx.send(LoriToMainCommand::ObjectSetMotion { puid: this.puid, uid: this.uid, x, y });
+            _= this.rx.recv();
             Ok(())
         });
-        methods.add_method("pull", |_, this, (x1, y1, x2, y2)| {
-            _= this.tx.send(LoriToMainCommand::ObjectPull { puid: this.puid, uid: this.uid, x1, y1, x2, y2 });
+        methods.add_method("set_angle", |_, this, r| {
+            _= this.tx.send(LoriToMainCommand::ObjectSetAngle { puid: this.puid, uid: this.uid, r });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("get_position", |_, this, ()| {
+            _= this.tx.send(LoriToMainCommand::ObjectGetPosition { puid: this.puid, uid: this.uid });
+            let mut real_position: [f32; 2] = [0., 0.];
+            while let Ok(cmd) = this.rx.recv() {
+                match cmd {
+                    MainToLoriCommand::ReturnObjectGetPosition { position } => {
+                        real_position = position;
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+            Ok(real_position)
+        });
+        methods.add_method("get_motion", |_, this, ()| {
+            _= this.tx.send(LoriToMainCommand::ObjectGetMotion { puid: this.puid, uid: this.uid });
+            let mut real_motion: [f32; 2] = [0., 0.];
+            while let Ok(cmd) = this.rx.recv() {
+                match cmd {
+                    MainToLoriCommand::ReturnObjectGetMotion { motion } => {
+                        real_motion = motion;
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+            Ok(real_motion)
+        });
+        methods.add_method("get_angle", |_, this, ()| {
+            _= this.tx.send(LoriToMainCommand::ObjectGetAngle { puid: this.puid, uid: this.uid });
+            let mut real_angle: f32 = 0.;
+            while let Ok(cmd) = this.rx.recv() {
+                match cmd {
+                    MainToLoriCommand::ReturnObjectGetAngle { angle } => {
+                        real_angle = angle;
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+            Ok(real_angle)
+        });
+        methods.add_method("impulse", |_, this, (x, y)| {
+            _= this.tx.send(LoriToMainCommand::ObjectImpulse { puid: this.puid, uid: this.uid, x, y });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("add_force", |_, this, (x, y)| {
+            _= this.tx.send(LoriToMainCommand::ObjectAddForce { puid: this.puid, uid: this.uid, x, y });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("add_world_force", |_, this, (x1, y1, x2, y2)| {
+            _= this.tx.send(LoriToMainCommand::ObjectAddWorldForce { puid: this.puid, uid: this.uid, x1, y1, x2, y2 });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("add_torque", |_, this, r| {
+            _= this.tx.send(LoriToMainCommand::ObjectAddTorque { puid: this.puid, uid: this.uid, r });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("enable", |_, this, ()| {
+            _= this.tx.send(LoriToMainCommand::ObjectEnable { puid: this.puid, uid: this.uid });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("disable", |_, this, ()| {
+            _= this.tx.send(LoriToMainCommand::ObjectDisable { puid: this.puid, uid: this.uid });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("toggle", |_, this, ()| {
+            _= this.tx.send(LoriToMainCommand::ObjectToggle { puid: this.puid, uid: this.uid });
+            _= this.rx.recv();
             Ok(())
         });
     }

@@ -12,8 +12,9 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lori.set.window.title(text: string) -> nil
 [=] lori.set.window.size(w: int, h: int) -> nil
 [=] lori.set.window.resizable(is: bool) -> nil
-[=] lori.set.gravity(x: number, y: number) -> nil
-[=] lori.set.camera.position(x, y) -> nil
+[=] lori.set.physics.gravity(x: number, y: number) -> nil
+[=] lori.set.physics.hertz(hz: number) -> nil
+[=] lori.set.camera.position(x: number, y: number) -> nil
 
 [=] lori.get.window.size() -> table[w: int, h: int]
 [=] lori.get.key.state(key: string) -> bool
@@ -39,22 +40,20 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [ ] lori.Sound.stop() -> nil
 
 [=] lori.Spawner.spawn(x, y, r) -> lori.Object
-[ ] lori.Spawner.erradicate() -> nil
 
-[ ] lori.Object.set.position(x: number, y: number) -> nil
-[ ] lori.Object.set.motion(x: number, y: number) -> nil
-[ ] lori.Object.set.angle(r: number) -> nil
-[ ] lori.Object.get.position() -> table[x: number, y: number]
-[ ] lori.Object.get.motion() -> table[x: number, y: number]
-[ ] lori.Object.get.angle() -> number
-[=] lori.Object.move(x: number, y: number) -> nil
-[=] lori.Object.push(x: number, y: number) -> nil
-[=] lori.Object.pull(x1: number, y1: number, x2: number, y2: number) -> nil
-lori.Object.rotate(r: number) -> nil
-lori.Object.enable() -> nil
-lori.Object.disable() -> nil
-lori.Object.toggle() -> nil
-lori.Object.delete() -> nil
+[=] lori.Object.set_position(x: number, y: number) -> nil
+[=] lori.Object.set_motion(x: number, y: number) -> nil
+[=] lori.Object.set_angle(r: number) -> nil
+[=] lori.Object.get_position() -> table[x: number, y: number]
+[=] lori.Object.get_motion() -> table[x: number, y: number]
+[=] lori.Object.get_angle() -> number
+[=] lori.Object.impulse(x: number, y: number) -> nil
+[=] lori.Object.add_force(x: number, y: number) -> nil
+[-] lori.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
+[=] lori.Object.add_torque(r: number) -> nil
+[=] lori.Object.enable() -> nil
+[=] lori.Object.disable() -> nil
+[=] lori.Object.toggle() -> nil
 
 lori.Border.enable() -> nil
 lori.Border.disable() -> nil
@@ -96,4 +95,5 @@ TODO:
 - Handle exceptions for when lori.update and/or lori.render is not present
 - Make github workflow work
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
+- Change physics ratio
 ```
