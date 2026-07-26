@@ -1,9 +1,9 @@
--- lori_meta.lua
+-- lora_meta.lua
 -- DO NOT require this at runtime. Only for LuaLS / IDE.
 --- @meta
 
---- @class Lori
-Lori = {
+--- @class Lora
+Lora = {
     --- @class Vertex
     --- @field position number[]
     --- @field uv number[]
@@ -43,7 +43,7 @@ Lori = {
         --- @param y number
         --- @param r number
         --- @return Object
-        spawn = function(self, x, y, r) return Lori.Object end,
+        spawn = function(self, x, y, r) return Lora.Object end,
     },
 
     --- @class Object
@@ -218,32 +218,32 @@ Lori = {
         --- @param h number
         --- @param color number[]
         --- @return Shape
-        shape = function(type, w, h, color) return Lori.Shape end,
+        shape = function(type, w, h, color) return Lora.Shape end,
         --- @param vertices [number[]]
         --- @param indices integer[] | nil
         --- @return Shape
-        mesh = function(vertices, indices) return Lori.Shape end,
+        mesh = function(vertices, indices) return Lora.Shape end,
         --- @param img string
         --- @param scale number
         --- @return Shape
-        image = function(img, scale) return Lori.Shape end,
+        image = function(img, scale) return Lora.Shape end,
         --- @param points Point[]
         --- @return Border
-        border = function(points) return Lori.Border end,
+        border = function(points) return Lora.Border end,
         --- @param shape Shape
         --- @param collision "static"|"diaxial"|"dynamic"
         --- @return Collider
-        collider = function(shape, collision) return Lori.Collider end,
+        collider = function(shape, collision) return Lora.Collider end,
         --- @param shape Shape | nil
         --- @param collider Collider | nil
         --- @return Spawner
-        spawner = function(shape, collider) return Lori.Spawner end,
+        spawner = function(shape, collider) return Lora.Spawner end,
         --- @param sound string
         --- @return Sound
-        sound = function(sound) return Lori.Sound end,
+        sound = function(sound) return Lora.Sound end,
         --- @param font string
         --- @return Font
-        font = function(font) return Lori.Font end,
+        font = function(font) return Lora.Font end,
     },
 
     draw = {
@@ -278,4 +278,4 @@ Lori = {
 }
 
 --- @diagnostic disable-next-line
-lori = Lori
+lora = Lora

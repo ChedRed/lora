@@ -1,35 +1,35 @@
 PlayerJumped = false
 PlayertwoJumped = false
 
-function lori.load()
-    lori.set.window.title("Lori Test Application")
+function lora.load()
+    lora.set.window.title("Lora Test Application")
 
-    lori.set.physics.gravity(0, -1000)
-    lori.set.physics.hertz(200)
+    lora.set.physics.gravity(0, -1000)
+    lora.set.physics.hertz(200)
 
-    PlayerShape = lori.new.mesh({
+    PlayerShape = lora.new.mesh({
         { 0.,   0.,   0., 0., 1., 0., 0., 1. },
         { -6.4, 25.6, 0., 0., 1., 0., 0., 1. },
         { 32.,  0.,   0., 0., 1., 0., 0., 1. },
         { 16,   40,   0., 0., 1., 0., 0., 1. },
         { 38.4, 25.6, 0., 0., 1., 0., 0., 1. },
     }, { 0, 1, 2, 3, 4 })
-    PlayerCollider = lori.new.collider(PlayerShape, "dynamic")
-    PlayerSpawner = lori.new.spawner(PlayerShape, PlayerCollider)
+    PlayerCollider = lora.new.collider(PlayerShape, "dynamic")
+    PlayerSpawner = lora.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(-20, 0, 0)
 
-    PlayertwoShape = lori.new.shape("rectangle", 32, 32, { 0, 1, 0, 1 })
-    PlayertwoCollider = lori.new.collider(PlayertwoShape, "diaxial")
-    PlayertwoSpawner = lori.new.spawner(PlayertwoShape, PlayertwoCollider)
+    PlayertwoShape = lora.new.shape("rectangle", 32, 32, { 0, 1, 0, 1 })
+    PlayertwoCollider = lora.new.collider(PlayertwoShape, "diaxial")
+    PlayertwoSpawner = lora.new.spawner(PlayertwoShape, PlayertwoCollider)
     PlayertwoObject = PlayertwoSpawner:spawn(10, 0, 0)
 
-    MapShape = lori.new.shape("rectangle", 2000, 10, { 0, 0, 1, 1 })
-    MapCollider = lori.new.collider(MapShape, "static")
-    MapSpawner = lori.new.spawner(MapShape, MapCollider)
+    MapShape = lora.new.shape("rectangle", 2000, 10, { 0, 0, 1, 1 })
+    MapCollider = lora.new.collider(MapShape, "static")
+    MapSpawner = lora.new.spawner(MapShape, MapCollider)
     MapObject = MapSpawner:spawn(-500, -500, 0)
 end
 
-function lori.keypressed(key)
+function lora.keypressed(key)
     if key == "w" then
         if not PlayerJumped then
             PlayerObject:impulse(0, 500)
@@ -44,7 +44,7 @@ function lori.keypressed(key)
     end
 end
 
-function lori.keyreleased(key)
+function lora.keyreleased(key)
     if key == "w" then
         PlayerJumped = false
     end
@@ -53,18 +53,18 @@ function lori.keyreleased(key)
     end
 end
 
-function lori.update(delta)
-    if lori.get.key.state("a") then
+function lora.update(delta)
+    if lora.get.key.state("a") then
         PlayerObject:add_torque(10000)
     end
-    if lori.get.key.state("d") then
+    if lora.get.key.state("d") then
         PlayerObject:add_torque(-10000)
     end
 
-    if lori.get.key.state("j") then
+    if lora.get.key.state("j") then
         PlayertwoObject:add_force(-1000, 0)
     end
-    if lori.get.key.state("l") then
+    if lora.get.key.state("l") then
         PlayertwoObject:add_force(1000, 0)
     end
 end

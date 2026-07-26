@@ -1,12 +1,12 @@
 pub mod transform;
-pub mod lori;
+pub mod lora;
 pub mod print;
 
 use transform::Vector2;
 
-use crate::content::{collider::LoriColliderRef, shape::LoriShapeRef, spawner::{LoriObjectRef, LoriSpawnerRef}};
+use crate::content::{collider::LoraColliderRef, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}};
 
-pub enum LoriToMainCommand {
+pub enum LoraToMainCommand {
     SetWindowTitle {
         text: String,
     },
@@ -44,12 +44,12 @@ pub enum LoriToMainCommand {
         indices: Vec<u32>,
     },
     NewCollider {
-        shape: LoriShapeRef,
+        shape: LoraShapeRef,
         collision: String,
     },
     NewSpawner {
-        shape: Option<LoriShapeRef>,
-        collider: Option<LoriColliderRef>,
+        shape: Option<LoraShapeRef>,
+        collider: Option<LoraColliderRef>,
     },
     DrawPrimitive {
         x: f32,
@@ -134,7 +134,7 @@ pub enum LoriToMainCommand {
     },
 }
 
-pub enum MainToLoriCommand {
+pub enum MainToLoraCommand {
     ReturnGetWindowSize {
         w: u32,
         h: u32,
@@ -147,19 +147,19 @@ pub enum MainToLoriCommand {
         y: f32,
     },
     ReturnNewShape {
-        shape: LoriShapeRef,
+        shape: LoraShapeRef,
     },
     ReturnNewMesh {
-        mesh: LoriShapeRef,
+        mesh: LoraShapeRef,
     },
     ReturnNewCollider {
-        collider: LoriColliderRef,
+        collider: LoraColliderRef,
     },
     ReturnNewSpawner {
-        spawner: LoriSpawnerRef,
+        spawner: LoraSpawnerRef,
     },
     ReturnNewObject {
-        object: LoriObjectRef,
+        object: LoraObjectRef,
     },
     ReturnObjectGetPosition {
         position: [f32; 2],
@@ -173,7 +173,7 @@ pub enum MainToLoriCommand {
     Return,
 }
 
-pub enum MainToLoriCall {
+pub enum MainToLoraCall {
     Load,
     Keypressed {
         code: String,
@@ -204,7 +204,7 @@ pub enum MainToLoriCall {
     Exit
 }
 
-pub enum LoriToMainCall {
+pub enum LoraToMainCall {
     Load,
     Keypressed,
     Keyreleased,

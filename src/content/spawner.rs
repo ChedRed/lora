@@ -3,24 +3,24 @@ use mlua::{UserData, UserDataMethods};
 use rapier2d::{dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet}, geometry::{ColliderBuilder, ColliderSet}, math::Vec2};
 
 use wgpu::{naga::FastHashMap, util::DeviceExt};
-use crate::{content::{collider::LoriCollider, shape::LoriShape}, utils::{Location, LoriToMainCommand, MainToLoriCommand}};
+use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand}};
 
 
 #[derive(Clone)]
-pub struct LoriSpawnerRef {
+pub struct LoraSpawnerRef {
     pub uid: u64,
-    pub tx: Sender<LoriToMainCommand>,
-    pub rx: Receiver<MainToLoriCommand>,
+    pub tx: Sender<LoraToMainCommand>,
+    pub rx: Receiver<MainToLoraCommand>,
 }
 
-impl UserData for LoriSpawnerRef {
+impl UserData for LoraSpawnerRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("spawn", |_, this, (x, y, r)| {
-            _= this.tx.send(LoriToMainCommand::SpawnerSpawn { uid: this.uid, x, y, r });
-            let mut real_object: Option<LoriObjectRef> = None;
+            _= this.tx.send(LoraToMainCommand::SpawnerSpawn { uid: this.uid, x, y, r });
+            let mut real_object: Option<LoraObjectRef> = None;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
-                    MainToLoriCommand::ReturnNewObject { object } => {
+                    MainToLoraCommand::ReturnNewObject { object } => {
                         real_object = Some(object);
                         break;
                     }
@@ -33,36 +33,36 @@ impl UserData for LoriSpawnerRef {
 }
 
 #[derive(Clone)]
-pub struct LoriObjectRef {
+pub struct LoraObjectRef {
     pub puid: u64,
     pub uid: u64,
-    pub tx: Sender<LoriToMainCommand>,
-    pub rx: Receiver<MainToLoriCommand>,
+    pub tx: Sender<LoraToMainCommand>,
+    pub rx: Receiver<MainToLoraCommand>,
 }
 
-impl UserData for LoriObjectRef {
+impl UserData for LoraObjectRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("set_position", |_, this, (x, y)| {
-            _= this.tx.send(LoriToMainCommand::ObjectSetPosition { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectSetPosition { puid: this.puid, uid: this.uid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("set_motion", |_, this, (x, y)| {
-            _= this.tx.send(LoriToMainCommand::ObjectSetMotion { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectSetMotion { puid: this.puid, uid: this.uid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("set_angle", |_, this, r| {
-            _= this.tx.send(LoriToMainCommand::ObjectSetAngle { puid: this.puid, uid: this.uid, r });
+            _= this.tx.send(LoraToMainCommand::ObjectSetAngle { puid: this.puid, uid: this.uid, r });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("get_position", |_, this, ()| {
-            _= this.tx.send(LoriToMainCommand::ObjectGetPosition { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetPosition { puid: this.puid, uid: this.uid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
-                    MainToLoriCommand::ReturnObjectGetPosition { position } => {
+                    MainToLoraCommand::ReturnObjectGetPosition { position } => {
                         real_position = position;
                         break;
                     }
@@ -72,11 +72,11 @@ impl UserData for LoriObjectRef {
             Ok(real_position)
         });
         methods.add_method("get_motion", |_, this, ()| {
-            _= this.tx.send(LoriToMainCommand::ObjectGetMotion { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetMotion { puid: this.puid, uid: this.uid });
             let mut real_motion: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
-                    MainToLoriCommand::ReturnObjectGetMotion { motion } => {
+                    MainToLoraCommand::ReturnObjectGetMotion { motion } => {
                         real_motion = motion;
                         break;
                     }
@@ -86,11 +86,11 @@ impl UserData for LoriObjectRef {
             Ok(real_motion)
         });
         methods.add_method("get_angle", |_, this, ()| {
-            _= this.tx.send(LoriToMainCommand::ObjectGetAngle { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetAngle { puid: this.puid, uid: this.uid });
             let mut real_angle: f32 = 0.;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
-                    MainToLoriCommand::ReturnObjectGetAngle { angle } => {
+                    MainToLoraCommand::ReturnObjectGetAngle { angle } => {
                         real_angle = angle;
                         break;
                     }
@@ -100,44 +100,44 @@ impl UserData for LoriObjectRef {
             Ok(real_angle)
         });
         methods.add_method("impulse", |_, this, (x, y)| {
-            _= this.tx.send(LoriToMainCommand::ObjectImpulse { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectImpulse { puid: this.puid, uid: this.uid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("add_force", |_, this, (x, y)| {
-            _= this.tx.send(LoriToMainCommand::ObjectAddForce { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectAddForce { puid: this.puid, uid: this.uid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("add_world_force", |_, this, (x1, y1, x2, y2)| {
-            _= this.tx.send(LoriToMainCommand::ObjectAddWorldForce { puid: this.puid, uid: this.uid, x1, y1, x2, y2 });
+            _= this.tx.send(LoraToMainCommand::ObjectAddWorldForce { puid: this.puid, uid: this.uid, x1, y1, x2, y2 });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("add_torque", |_, this, r| {
-            _= this.tx.send(LoriToMainCommand::ObjectAddTorque { puid: this.puid, uid: this.uid, r });
+            _= this.tx.send(LoraToMainCommand::ObjectAddTorque { puid: this.puid, uid: this.uid, r });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("enable", |_, this, ()| {
-            _= this.tx.send(LoriToMainCommand::ObjectEnable { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectEnable { puid: this.puid, uid: this.uid });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("disable", |_, this, ()| {
-            _= this.tx.send(LoriToMainCommand::ObjectDisable { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectDisable { puid: this.puid, uid: this.uid });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("toggle", |_, this, ()| {
-            _= this.tx.send(LoriToMainCommand::ObjectToggle { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectToggle { puid: this.puid, uid: this.uid });
             _= this.rx.recv();
             Ok(())
         });
     }
 }
 
-pub struct LoriSpawner {
+pub struct LoraSpawner {
     count: u64,
     
     pub indices: u32,
@@ -153,8 +153,8 @@ pub struct LoriSpawner {
     collide: bool,
 }
 
-impl LoriSpawner {
-    pub fn new(device: &wgpu::Device, shape: Option<LoriShape>, collider: Option<LoriCollider>) -> Self {
+impl LoraSpawner {
+    pub fn new(device: &wgpu::Device, shape: Option<LoraShape>, collider: Option<LoraCollider>) -> Self {
         let count: u64 = 0;
         
         let mut points: Vec<Vec2> = Vec::new();
