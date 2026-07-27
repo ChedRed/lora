@@ -96,6 +96,12 @@ Lora = {
         add_torque = function(self, r) end,
         --- @param self Object
         --- @return nil
+        show = function(self) end,
+        --- @param self Object
+        --- @return nil
+        hide = function(self) end,
+        --- @param self Object
+        --- @return nil
         enable = function(self) end,
         --- @param self Object
         --- @return nil

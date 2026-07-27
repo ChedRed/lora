@@ -22,7 +22,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 
 [=] lora.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lora.Shape
 [=] lora.new.mesh(vertices: [number[]], indices: int[] | nil) -> lora.Shape
-[ ] lora.new.image(image: string, scale: number) -> lora.Shape
+[=] lora.new.image(image: string, scale: number) -> lora.Shape
 [ ] lora.new.border(points: Point[]) -> lora.Border
 [=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
 [=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
@@ -50,8 +50,8 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Object.add_force(x: number, y: number) -> nil
 [=] lora.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
 [=] lora.Object.add_torque(r: number) -> nil
-lora.Object.show() -> nil
-lora.Object.hide() -> nil
+[ ] lora.Object.show() -> nil
+[ ] lora.Object.hide() -> nil
 [=] lora.Object.enable() -> nil
 [=] lora.Object.disable() -> nil
 [=] lora.Object.toggle() -> nil

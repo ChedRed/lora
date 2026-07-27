@@ -3,7 +3,7 @@ use mlua::{UserData, UserDataMethods};
 use rapier2d::{dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet}, geometry::{ColliderBuilder, ColliderSet}, math::Vec2};
 
 use wgpu::{naga::FastHashMap, util::DeviceExt};
-use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand, print::{dbugln, sdbugln}}};
+use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand}};
 
 
 #[derive(Clone)]
@@ -119,6 +119,16 @@ impl UserData for LoraObjectRef {
             _= this.rx.recv();
             Ok(())
         });
+        methods.add_method("show", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectShow { puid: this.puid, uid: this.uid });
+            _= this.rx.recv();
+            Ok(())
+        });
+        methods.add_method("hide", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectHide { puid: this.puid, uid: this.uid });
+            _= this.rx.recv();
+            Ok(())
+        });
         methods.add_method("enable", |_, this, ()| {
             _= this.tx.send(LoraToMainCommand::ObjectEnable { puid: this.puid, uid: this.uid });
             _= this.rx.recv();
@@ -152,6 +162,8 @@ pub struct LoraSpawner {
     pub rigidhandles: FastHashMap<u64, RigidBodyHandle>,
     collision: String,
     collide: bool,
+    
+    pub status: FastHashMap<u64, (bool, bool)>,
 }
 
 impl LoraSpawner {
@@ -279,6 +291,7 @@ impl LoraSpawner {
             }));
         }
 
+        let status: FastHashMap<u64, (bool, bool)> = FastHashMap::default();
         
         Self {
             count,
@@ -295,6 +308,8 @@ impl LoraSpawner {
             rigidhandles,
             collision,
             collide,
+
+            status,
         }
     }
 
@@ -330,8 +345,11 @@ impl LoraSpawner {
                 colliders.insert_with_parent(hullshape.clone(), rb_handle, rigidbodies);
             }
         }
+
+        self.status.insert(self.count, (true, true));
+        
         self.count += 1;
-        return self.count - 1;
+        self.count - 1
     }
 
     pub fn renderable(&self) -> bool {

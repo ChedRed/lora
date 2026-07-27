@@ -127,6 +127,14 @@ pub enum LoraToMainCommand {
         uid: u64,
         r: f32,
     },
+    ObjectShow {
+        puid: u64,
+        uid: u64,
+    },
+    ObjectHide {
+        puid: u64,
+        uid: u64,
+    },
     ObjectEnable {
         puid: u64,
         uid: u64,

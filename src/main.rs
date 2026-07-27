@@ -922,6 +922,18 @@ impl State {
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
+            LoraToMainCommand::ObjectShow { puid, uid } => {
+                let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&puid).unwrap();
+                let status: &mut (bool, bool) = spawner.status.get_mut(&uid).unwrap();
+                status.0 = true;
+                _= self.lora_rtrn.send(MainToLoraCommand::Return);
+            }
+            LoraToMainCommand::ObjectHide { puid, uid } => {
+                let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&puid).unwrap();
+                let status: &mut (bool, bool) = spawner.status.get_mut(&uid).unwrap();
+                status.0 = false;
+                _= self.lora_rtrn.send(MainToLoraCommand::Return);
+            }
             LoraToMainCommand::ObjectEnable { puid, uid } => {
                 let spawner: &LoraSpawner = self.lora_spawners.get(&puid).unwrap();
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
