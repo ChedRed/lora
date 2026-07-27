@@ -1,9 +1,10 @@
 use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded}, select};
-use std::{fs, process::exit, sync::Arc, thread::JoinHandle};
+use mlua::chunk::AsChunk;
+use std::{ffi::OsStr, fs, process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
-use winit::{application::ApplicationHandler, event::MouseScrollDelta};
+use winit::{application::ApplicationHandler, event::MouseScrollDelta, platform::wayland::WindowAttributesExtWayland};
 use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, DeviceId, MouseButton, MouseScrollDelta::{LineDelta, PixelDelta}, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -33,6 +34,9 @@ struct Args {
 
     #[arg(long)]
     devbug: bool,
+
+    #[arg(long)]
+    compile: bool,
     
     filepath: String,
 
@@ -930,7 +934,9 @@ struct App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        let window = Arc::new(event_loop.create_window(Window::default_attributes()).unwrap());
+        let window = Arc::new(event_loop.create_window(Window::default_attributes()
+            .with_title("Lora Application")
+            .with_name("red.ched.lora", "red.ched.lora")).unwrap());
 
         let state = pollster::block_on(State::new(window.clone()));
         self.state = Some(state);
@@ -987,6 +993,12 @@ impl ApplicationHandler for App {
 }
 
 fn main() {
+    let argus: Args = Args::parse();
+    if argus.compile {
+        compile(argus);
+        exit(0);
+    }
+    
     let events = EventLoop::new().unwrap();
     events.set_control_flow(ControlFlow::Poll);
 
@@ -995,4 +1007,34 @@ fn main() {
         Ok(()) => infoln("Exited successfully."),
         Err(error) => serorln(format!("Exited with an error:\n {error:?}")),
     }
+}
+
+fn compile(argus: Args) {
+    let pathnames: Vec<String> = iterate_file(argus.filepath, None);
+    
+}
+
+fn iterate_file(path: String, prefix: Option<String>) -> Vec<String> {
+    let mut real_paths: Vec<String> = Vec::new();
+    let mut new_prefix: Option<String> = prefix.clone();
+    if prefix == None {
+        new_prefix = Some(path.clone());
+    }
+    
+    for entry in fs::read_dir(path).unwrap() {
+        let enry = entry.unwrap().path();
+        if enry.is_dir() {
+            let mut new_paths = iterate_file(enry.to_str().unwrap().to_string(), new_prefix.clone());
+            real_paths.append(&mut new_paths);
+        } else if enry.is_file() {
+            if enry.file_name() != Some(OsStr::new("lora.json")) {
+                if enry.file_name() != Some(OsStr::new("main.lua")) {
+                    let new_path = enry.strip_prefix(new_prefix.clone().unwrap())
+                        .unwrap().name().unwrap().to_string();
+                    real_paths.push(new_path);
+                }
+            }
+        }
+    };
+    real_paths
 }

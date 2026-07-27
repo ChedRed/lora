@@ -94,4 +94,40 @@ TODO:
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
 - Change physics ratio
 - Custom shaders?
+- Compiler
+```
+
+```
+Compiler will:
+- Compile all files into a .lora
+- Create package based on platform
+  - Windows: bundle lora.exe and game.id.lora into "Game Name".exe
+  - MacOS: "Game Name".app
+  \- Contents
+     |- MacOS
+     |  \- lora (unix)
+     |- Resources
+     |  \- game.id.lora 
+     |- Info.plist
+  
+
+
+Compiler will handle paths like this:
+- Get all filepaths (ignoring lora.json)
+- u32 for length of code
+- bytes for code
+- u32 for number of filepaths
+/ - u32 for length of filepath N
+| - bytes of filepath N
+| - u32 for length of file N contents
+\ - bytes of file N
+
+Lora will handle searching compiled filepaths like this:
+- Read length of code
+- Skip length of code
+/ - Check length for filepath N
+| - Read filepath N
+| - If filepath N matches, read length of bytes and copy M bytes of file N
+| - If not, skip M bytes
+\ - All else fails, error (file not found 'filepath')
 ```
