@@ -1,8 +1,7 @@
 use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded}, select};
-use mlua::chunk::AsChunk;
-use std::{ffi::OsStr, fs, process::exit, sync::Arc, thread::JoinHandle};
+use std::{fs, process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
 use winit::{application::ApplicationHandler, event::MouseScrollDelta, platform::wayland::WindowAttributesExtWayland};
 use winit::dpi::PhysicalSize;
@@ -13,17 +12,18 @@ use winit::window::{Window, WindowId};
 use wgpu::{naga::FastHashMap, util::DeviceExt};
 
 pub mod content;
-use content::{shape::LoraShape, spawner::LoraSpawner};
+use content::{shape::{LoraShape, LoraShapeRef}, collider::{LoraCollider, LoraColliderRef}, spawner::{LoraSpawner, LoraSpawnerRef, LoraObjectRef}};
 pub mod utils;
-use crate::{content::{collider::{LoraCollider, LoraColliderRef}, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}}, utils::{GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*}};
-
+use utils::{GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*};
+pub mod compiler;
+use compiler::compile;
 
 #[derive(Parser, Debug)]
 #[command(name = "lora")]
 #[command(
     about="A rust-based framework for Lua games!",
     long_about="A rust-based framework that allows you to create any game in Lua with the lora API!")]
-struct Args {
+pub struct Args {
     #[arg(short, long,
         help="Enable test mode",
         long_help="Enables testing for github actions.\nWhen enabled, exits at the end of lora.render() and will require all lora functions to be present in lua code.")]
@@ -1009,32 +1009,3 @@ fn main() {
     }
 }
 
-fn compile(argus: Args) {
-    let pathnames: Vec<String> = iterate_file(argus.filepath, None);
-    
-}
-
-fn iterate_file(path: String, prefix: Option<String>) -> Vec<String> {
-    let mut real_paths: Vec<String> = Vec::new();
-    let mut new_prefix: Option<String> = prefix.clone();
-    if prefix == None {
-        new_prefix = Some(path.clone());
-    }
-    
-    for entry in fs::read_dir(path).unwrap() {
-        let enry = entry.unwrap().path();
-        if enry.is_dir() {
-            let mut new_paths = iterate_file(enry.to_str().unwrap().to_string(), new_prefix.clone());
-            real_paths.append(&mut new_paths);
-        } else if enry.is_file() {
-            if enry.file_name() != Some(OsStr::new("lora.json")) {
-                if enry.file_name() != Some(OsStr::new("main.lua")) {
-                    let new_path = enry.strip_prefix(new_prefix.clone().unwrap())
-                        .unwrap().name().unwrap().to_string();
-                    real_paths.push(new_path);
-                }
-            }
-        }
-    };
-    real_paths
-}
