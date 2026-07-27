@@ -18,7 +18,7 @@ function lora.load()
     PlayerSpawner = lora.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(-20, 0, 0)
 
-    PlayertwoShape = lora.new.shape("rectangle", 32, 32, { 0, 1, 0, 1 })
+    PlayertwoShape = lora.new.image("resources/image.png", 0.5)
     PlayertwoCollider = lora.new.collider(PlayertwoShape, "diaxial")
     PlayertwoSpawner = lora.new.spawner(PlayertwoShape, PlayertwoCollider)
     PlayertwoObject = PlayertwoSpawner:spawn(10, 0, 0)

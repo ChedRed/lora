@@ -50,6 +50,8 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Object.add_force(x: number, y: number) -> nil
 [=] lora.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
 [=] lora.Object.add_torque(r: number) -> nil
+lora.Object.show() -> nil
+lora.Object.hide() -> nil
 [=] lora.Object.enable() -> nil
 [=] lora.Object.disable() -> nil
 [=] lora.Object.toggle() -> nil

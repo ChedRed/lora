@@ -223,10 +223,10 @@ Lora = {
         --- @param indices integer[] | nil
         --- @return Shape
         mesh = function(vertices, indices) return Lora.Shape end,
-        --- @param img string
+        --- @param image string
         --- @param scale number
         --- @return Shape
-        image = function(img, scale) return Lora.Shape end,
+        image = function(image, scale) return Lora.Shape end,
         --- @param points Point[]
         --- @return Border
         border = function(points) return Lora.Border end,

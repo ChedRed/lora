@@ -2,9 +2,12 @@ pub mod transform;
 pub mod lora;
 pub mod print;
 
+use std::path;
+
+use image::EncodableLayout;
 use transform::Vector2;
 
-use crate::content::{collider::LoraColliderRef, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}};
+use crate::{content::{collider::LoraColliderRef, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}}};
 
 pub enum LoraToMainCommand {
     SetWindowTitle {
@@ -33,6 +36,10 @@ pub enum LoraToMainCommand {
         key: String,
     },
     GetCameraPosition,
+    NewImage {
+        image: String,
+        scale: f32,
+    },
     NewShape {
         kind: String,
         w: f32,
@@ -145,6 +152,9 @@ pub enum MainToLoraCommand {
     ReturnCameraPosition {
         x: f32,
         y: f32,
+    },
+    ReturnNewImage {
+        image: LoraShapeRef,
     },
     ReturnNewShape {
         shape: LoraShapeRef,
@@ -356,4 +366,19 @@ impl GPUPrimitives {
     
         primitives
     }
+}
+
+pub fn get_image(prefix: String, image: String) -> (Vec<u8>, (u32, u32)) {
+    let img = image::ImageReader::open(path::Path::new(&prefix).join(&image)).unwrap().decode().unwrap();
+    let real_img = img.as_rgba8().unwrap();
+
+    let dimensions = real_img.dimensions();
+    let bytes = real_img.as_bytes();
+
+    let mut real_bytes: Vec<u8> = Vec::new();
+    for byte in bytes {
+        real_bytes.push(*byte);
+    }
+    
+    (real_bytes, dimensions)
 }

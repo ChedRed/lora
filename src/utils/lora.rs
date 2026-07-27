@@ -121,6 +121,20 @@ impl Lora {
         }).unwrap());
         
         let new = _lua.create_table().unwrap();
+        _= new.set("image", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.new.shape
+            move |_, (image, scale)| {
+                _= tx.send(LoraToMainCommand::NewImage { image, scale });
+                let mut new_image: Option<LoraShapeRef> = None;
+                match rx.recv().unwrap() {
+                    MainToLoraCommand::ReturnNewImage { image } => {
+                        new_image = Some(image);
+                    }
+                    _ => {}
+                }
+                
+                Ok(new_image)
+            }
+        }).unwrap());
         _= new.set("shape", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.new.shape
             move |_, (kind, w, h, color)| {
                 _= tx.send(LoraToMainCommand::NewShape { kind, w, h, color });
@@ -138,15 +152,15 @@ impl Lora {
         _= new.set("mesh", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.new.mesh
             move |_, (vertices, indices): (Vec<[f32; 8]>, Vec<u32>)| {
                 _= tx.send(LoraToMainCommand::NewMesh { vertices: vertices.clone(), indices });
-                let mut new_shape: Option<LoraShapeRef> = None;
+                let mut new_mesh: Option<LoraShapeRef> = None;
                 match rx.recv().unwrap() {
                     MainToLoraCommand::ReturnNewMesh { mesh } => {
-                        new_shape = Some(mesh);
+                        new_mesh = Some(mesh);
                     }
                     _ => {}
                 }
                 
-                Ok(new_shape)
+                Ok(new_mesh)
             }
         }).unwrap());
         _= new.set("collider", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.new.collider

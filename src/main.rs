@@ -1,7 +1,7 @@
 use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded}, select};
-use std::{fs, process::exit, sync::Arc, thread::JoinHandle};
+use std::{fs, path, process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
 use winit::{application::ApplicationHandler, event::MouseScrollDelta, platform::wayland::WindowAttributesExtWayland};
 use winit::dpi::PhysicalSize;
@@ -14,7 +14,7 @@ use wgpu::{naga::FastHashMap, util::DeviceExt};
 pub mod content;
 use content::{shape::{LoraShape, LoraShapeRef}, collider::{LoraCollider, LoraColliderRef}, spawner::{LoraSpawner, LoraSpawnerRef, LoraObjectRef}};
 pub mod utils;
-use utils::{GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*};
+use utils::{GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*, get_image};
 pub mod compiler;
 use compiler::compile;
 
@@ -38,8 +38,7 @@ pub struct Args {
     #[arg(long)]
     compile: bool,
     
-    filepath: String,
-
+    filepath: String, // TODO: Make optional, have it check ./main.lua, ./*.lora, and platform-specific locations for .lora
 }
 
 
@@ -632,6 +631,10 @@ impl State {
                             }
                             renderpass.set_vertex_buffer(0, real_vertex_buffer.slice(..));
                             renderpass.set_vertex_buffer(1, real_location_buffer.slice(..));
+                            
+                            if let Some(bindgroup) = &obj.1.texture_bind_group {
+                                renderpass.set_bind_group(1, bindgroup, &[]);
+                            }
                             renderpass.set_index_buffer(real_index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                             renderpass.draw_indexed(0..obj.1.indices as u32, 0, 0..obj.1.locations.len() as _);
                         }
@@ -664,7 +667,7 @@ impl State {
 
         self.last_time = self.current_time;
     }
-
+    
     fn handle_lora_commands(&mut self, v: LoraToMainCommand) {
         match v {
             LoraToMainCommand::SetWindowTitle { text } => {
@@ -702,6 +705,26 @@ impl State {
             LoraToMainCommand::GetCameraPosition => {
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnCameraPosition { x: self.gpu_view.position[0], y: self.gpu_view.position[1] });
             }
+            LoraToMainCommand::NewImage { image, scale } => {
+                let mut vertices: Vec<Vertex> = Vec::new();
+                let mut indices: Vec<u32> = Vec::new();
+                
+                let (image_bytes, image_scale) = get_image(path::Path::new(&self.argus.filepath).parent().unwrap().to_str().unwrap().to_string(), image);
+                vertices.push(Vertex { position: [0., 0.], uv: [0., 0.], color: [1., 1., 1., 1.] });
+                vertices.push(Vertex { position: [image_scale.0 as f32 * scale, 0.], uv: [1., 0.], color: [1., 1., 1., 1.] });
+                vertices.push(Vertex { position: [0., image_scale.1 as f32 * scale], uv: [0., 1.], color: [1., 1., 1., 1.] });
+                vertices.push(Vertex { position: [image_scale.0 as f32 * scale, image_scale.1 as f32 * scale], uv: [1., 1.], color: [1., 1., 1., 1.] });
+
+                indices.push(0);
+                indices.push(1);
+                indices.push(2);
+                indices.push(3);
+
+                
+                self.lora_shapes.insert(self.shape_id, LoraShape::new(vertices, indices, Some(image_bytes), Some(image_scale)));
+                _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewImage { image: LoraShapeRef { uid: self.shape_id, tx: self.lora_cmd_rev.clone() } });
+                self.shape_id += 1;
+            }
             LoraToMainCommand::NewShape { kind, w, h, color } => {
                 let mut vertices: Vec<Vertex> = Vec::new();
                 let mut indices: Vec<u32> = Vec::new();
@@ -716,7 +739,7 @@ impl State {
                     indices.push(2);
                     indices.push(3);
                 }
-                self.lora_shapes.insert(self.shape_id, LoraShape::new(vertices, indices));
+                self.lora_shapes.insert(self.shape_id, LoraShape::new(vertices, indices, None, None));
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewShape { shape: LoraShapeRef { uid: self.shape_id, tx: self.lora_cmd_rev.clone() } });
                 self.shape_id += 1;
             }
@@ -726,7 +749,7 @@ impl State {
                     new_vertices.push(Vertex { position: [vertex[0], vertex[1]], uv: [vertex[2], vertex[3]], color: [vertex[4], vertex[5], vertex[6], vertex[7]] });
                 }
                 
-                self.lora_shapes.insert(self.shape_id, LoraShape::new(new_vertices, indices));
+                self.lora_shapes.insert(self.shape_id, LoraShape::new(new_vertices, indices, None, None));
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewMesh { mesh: LoraShapeRef { uid: self.shape_id, tx: self.lora_cmd_rev.clone() } });
                 self.shape_id += 1;
             }
@@ -750,7 +773,7 @@ impl State {
                     final_collider = self.lora_colliders.get(&real_collider.uid).cloned();
                 }
                 
-                self.lora_spawners.insert(self.spawner_id, LoraSpawner::new(&self.device, final_shape, final_collider));
+                self.lora_spawners.insert(self.spawner_id, LoraSpawner::new(&self.device, &self.queue, final_shape, final_collider));
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewSpawner { spawner: LoraSpawnerRef { uid: self.spawner_id, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } });
                 self.spawner_id += 1;
             }

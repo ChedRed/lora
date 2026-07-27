@@ -1,6 +1,6 @@
 use std::{ffi::OsStr, fs, path::Path};
 
-use crate::{Args, utils::print::{errorln, sdbugln}};
+use crate::{Args, utils::print::errorln};
 
 pub fn compile(argus: Args) {
     let (pathnames, _manifest, lua) = iterate_dir(argus.filepath.clone());
@@ -68,6 +68,13 @@ fn write_u32(bytes: &mut Vec<u8>, input: u32) {
     }
 }
 
+fn write_u64(bytes: &mut Vec<u8>, input: u64) {
+    let bytes_input = input.to_be_bytes();
+    for byte in bytes_input {
+        bytes.push(byte);
+    }
+}
+
 fn write_string(bytes: &mut Vec<u8>, input: &String) {
     write_u32(bytes, input.len() as u32);
     let mut bytes_input = input.clone().into_bytes();
@@ -76,6 +83,6 @@ fn write_string(bytes: &mut Vec<u8>, input: &String) {
 
 fn write_file(bytes: &mut Vec<u8>, input: &String, prefix: &String) {
     let mut bytes_input = fs::read(Path::new(prefix).join(input)).unwrap();
-    write_u32(bytes, bytes_input.len() as u32);
+    write_u64(bytes, bytes_input.len() as u64);
     bytes.append(&mut bytes_input);
 }
