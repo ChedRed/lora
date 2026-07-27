@@ -95,6 +95,8 @@ struct State {
     gpu_view_buffer: wgpu::Buffer,
     gpu_view_bind_group: wgpu::BindGroup,
 
+    texture_bind_layout: wgpu::BindGroupLayout,
+
     primitive_buffer: wgpu::Buffer,
     primitive_bind_group: wgpu::BindGroup,
 
@@ -152,7 +154,11 @@ impl State {
         });
         
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
-        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor::default()).await.unwrap();
+        let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
+            label: Some("WGPU Device and Adapter"),
+            experimental_features: wgpu::ExperimentalFeatures::disabled(), // TODO: maybe we can use this?
+            ..wgpu::DeviceDescriptor::default()
+        }).await.unwrap();
         
         let size = window.inner_size();
         let surface = instance.create_surface(window.clone()).unwrap();
@@ -215,6 +221,28 @@ impl State {
             ],
         });
 
+        let texture_bind_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("Lora Texture Bind Group Layout"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    count: None,
+                },
+            ],
+        });
+
         let msaa_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("msaa color texture"),
             size: wgpu::Extent3d {
@@ -236,7 +264,7 @@ impl State {
         let raster_shader = device.create_shader_module(wgpu::include_wgsl!("./shaders/main.wgsl").into());
         let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Layout for Primary Render Pipeline"),
-            bind_group_layouts: &[Some(gpu_view_bind_layout).as_ref()],
+            bind_group_layouts: &[Some(&gpu_view_bind_layout), Some(&texture_bind_layout)],
             immediate_size: 0,
         });
 
@@ -317,7 +345,7 @@ impl State {
         
         let primitive_shader = device.create_shader_module(wgpu::include_wgsl!("./shaders/prim.wgsl").into());
         let primitive_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Layout for Primary Render Pipeline"),
+            label: Some("Layout for Primitive Render Pipeline"),
             bind_group_layouts: &[Some(primitive_bind_layout).as_ref()],
             immediate_size: 0,
         });
@@ -407,6 +435,8 @@ impl State {
             gpu_view,
             gpu_view_buffer,
             gpu_view_bind_group,
+
+            texture_bind_layout,
 
             primitive_buffer,
             primitive_bind_group,
@@ -625,18 +655,17 @@ impl State {
                                 }
                             }
                             
-                            if let Some(real_location_buffer) = &obj.1.location_buffer {
-                                let locations: Vec<Location> = obj.1.locations.values().copied().collect();
-                                self.queue.write_buffer(&real_location_buffer, 0, bytemuck::cast_slice(&locations));
-                            }
+                            let locations: Vec<Location> = obj.1.locations.values().copied().collect();
+                            self.queue.write_buffer(&real_location_buffer, 0, bytemuck::cast_slice(&locations));
                             renderpass.set_vertex_buffer(0, real_vertex_buffer.slice(..));
                             renderpass.set_vertex_buffer(1, real_location_buffer.slice(..));
-                            
+
                             if let Some(bindgroup) = &obj.1.texture_bind_group {
                                 renderpass.set_bind_group(1, bindgroup, &[]);
                             }
                             renderpass.set_index_buffer(real_index_buffer.slice(..), wgpu::IndexFormat::Uint32);
                             renderpass.draw_indexed(0..obj.1.indices as u32, 0, 0..obj.1.locations.len() as _);
+                            
                         }
                     }
                 }
@@ -773,7 +802,7 @@ impl State {
                     final_collider = self.lora_colliders.get(&real_collider.uid).cloned();
                 }
                 
-                self.lora_spawners.insert(self.spawner_id, LoraSpawner::new(&self.device, &self.queue, final_shape, final_collider));
+                self.lora_spawners.insert(self.spawner_id, LoraSpawner::new(&self.device, &self.queue, &self.texture_bind_layout, final_shape, final_collider));
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewSpawner { spawner: LoraSpawnerRef { uid: self.spawner_id, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } });
                 self.spawner_id += 1;
             }

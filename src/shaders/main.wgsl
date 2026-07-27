@@ -17,6 +17,7 @@ struct VertexInput {
 struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) color: vec4<f32>,
+    @location(1) uv: vec2<f32>,
 };
 
 @group(0) @binding(0) var<uniform> view: View;
@@ -38,6 +39,7 @@ fn vs_main(
     var out: VertexOutput;
     
     out.color = model.color;
+    out.uv = model.uv * vec2<f32>(1, -1) + vec2<f32>(0, 1);
     
     var prepos: vec2<f32> = rotate(vec2<f32>(0., 0.), model.position, model.rotation.x);
     prepos = rotate(view.position, prepos + model.offset, -view.rotation.x);
@@ -45,12 +47,14 @@ fn vs_main(
     var pos: vec2<f32> = prepos - view.position;
     pos /= view.scale;
     pos = pos * 2 + vec2<f32>(0.5, 0.5);
-    
+
     out.clip_position = vec4<f32>(pos, 0.0, 1.0);
     return out;
 }
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return vec4<f32>(in.color);
+    var real_color: vec4<f32> = in.color;
+    real_color *= textureSample(tex, samp, in.uv);
+    return vec4<f32>(real_color);
 }

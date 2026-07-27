@@ -3,7 +3,7 @@ use mlua::{UserData, UserDataMethods};
 use rapier2d::{dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet}, geometry::{ColliderBuilder, ColliderSet}, math::Vec2};
 
 use wgpu::{naga::FastHashMap, util::DeviceExt};
-use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand}};
+use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand, print::{dbugln, sdbugln}}};
 
 
 #[derive(Clone)]
@@ -155,7 +155,7 @@ pub struct LoraSpawner {
 }
 
 impl LoraSpawner {
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, shape: Option<LoraShape>, collider: Option<LoraCollider>) -> Self {
+    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, texture_layout: &wgpu::BindGroupLayout, shape: Option<LoraShape>, collider: Option<LoraCollider>) -> Self {
         let count: u64 = 0;
         
         let mut points: Vec<Vec2> = Vec::new();
@@ -208,88 +208,75 @@ impl LoraSpawner {
                 mapped_at_creation: false,
             }));
 
+            let mut texture_size: (u32, u32) = (1, 1);
+            
             if real_shape.texture_bytes.is_some() {
-                let texture_size = wgpu::Extent3d {
-                    width: real_shape.texture_dimensions.unwrap().0,
-                    height: real_shape.texture_dimensions.unwrap().1,
-                    depth_or_array_layers: 1,
-                };
-                
-                let texture = device.create_texture(&wgpu::TextureDescriptor {
-                    label: Some("Lora Texture"),
-                    size: texture_size,
-                    mip_level_count: 1,
-                    sample_count: 1,
-                    dimension: wgpu::TextureDimension::D2,
-                    format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                    usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-                    view_formats: &[],
-                });
-                
-                queue.write_texture(
-                    wgpu::TexelCopyTextureInfo {
-                        texture: &texture,
-                        mip_level: 0,
-                        origin: wgpu::Origin3d::ZERO,
-                        aspect: wgpu::TextureAspect::All,
-                    },
-                    &real_shape.texture_bytes.unwrap().into_boxed_slice(),
-                    wgpu::TexelCopyBufferLayout {
-                        offset: 0,
-                        bytes_per_row: Some(4 * real_shape.texture_dimensions.unwrap().0),
-                        rows_per_image: Some(real_shape.texture_dimensions.unwrap().1),
-                    },
-                    texture_size,
-                );
-
-                let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-                let sampler = device.create_sampler(&wgpu::SamplerDescriptor { // TODO: Make it owned by Main
-                    address_mode_u: wgpu::AddressMode::ClampToEdge,
-                    address_mode_v: wgpu::AddressMode::ClampToEdge,
-                    address_mode_w: wgpu::AddressMode::ClampToEdge,
-                    mag_filter: wgpu::FilterMode::Linear,
-                    min_filter: wgpu::FilterMode::Linear,
-                    mipmap_filter: wgpu::MipmapFilterMode::Nearest,
-                    ..Default::default()
-                });
-
-                let texture_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    label: Some("Lora Texture Bind Group Layout"),
-                    entries: &[
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 0,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
-                                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                                view_dimension: wgpu::TextureViewDimension::D2,
-                                multisampled: false,
-                            },
-                            count: None,
-                        },
-                        wgpu::BindGroupLayoutEntry {
-                            binding: 1,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                            count: None,
-                        },
-                    ],
-                });
-
-                texture_bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
-                    label: Some("Lora Texture Bind Group"),
-                    layout: &texture_bind_group_layout,
-                    entries: &[
-                        wgpu::BindGroupEntry {
-                            binding: 0,
-                            resource: wgpu::BindingResource::TextureView(&texture_view),
-                        },
-                        wgpu::BindGroupEntry {
-                            binding: 1,
-                            resource: wgpu::BindingResource::Sampler(&sampler),
-                        },
-                    ],
-                }));
+                texture_size = real_shape.texture_dimensions.unwrap();
             }
+
+            let gpu_texture_size = wgpu::Extent3d {
+                width: texture_size.0,
+                height: texture_size.1,
+                depth_or_array_layers: 1,
+            };
+            
+            let texture = device.create_texture(&wgpu::TextureDescriptor {
+                label: Some("Lora Texture"),
+                size: gpu_texture_size,
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+                view_formats: &[],
+            });
+
+            let mut real_bytes: Vec<u8> = vec![255u8, 255u8, 255u8, 255u8];
+            if real_shape.texture_bytes.is_some() {
+                real_bytes = real_shape.texture_bytes.unwrap();
+            }
+
+            queue.write_texture(
+                wgpu::TexelCopyTextureInfo {
+                    texture: &texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                    aspect: wgpu::TextureAspect::All,
+                },
+                &real_bytes.into_boxed_slice(),
+                wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(4 * texture_size.0),
+                    rows_per_image: Some(texture_size.1),
+                },
+                gpu_texture_size,
+            );
+
+            let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+            let sampler = device.create_sampler(&wgpu::SamplerDescriptor { // TODO: Make it owned by Main
+                address_mode_u: wgpu::AddressMode::ClampToEdge,
+                address_mode_v: wgpu::AddressMode::ClampToEdge,
+                address_mode_w: wgpu::AddressMode::ClampToEdge,
+                mag_filter: wgpu::FilterMode::Linear,
+                min_filter: wgpu::FilterMode::Linear,
+                mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+                ..Default::default()
+            });
+
+            texture_bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Lora Texture Bind Group"),
+                layout: &texture_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&texture_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&sampler),
+                    },
+                ],
+            }));
         }
 
         

@@ -1,5 +1,4 @@
 PlayerJumped = false
-PlayertwoJumped = false
 
 function lora.load()
     lora.set.window.title("Lora Test Application")
@@ -36,20 +35,11 @@ function lora.keypressed(key)
             PlayerJumped = true
         end
     end
-    if key == "i" then
-        if not PlayertwoJumped then
-            PlayertwoObject:impulse(0, 500)
-            PlayertwoJumped = true
-        end
-    end
 end
 
 function lora.keyreleased(key)
     if key == "w" then
         PlayerJumped = false
-    end
-    if key == "i" then
-        PlayertwoJumped = false
     end
 end
 
@@ -61,6 +51,9 @@ function lora.update(delta)
         PlayerObject:add_torque(-10000)
     end
 
+    if lora.get.key.state("i") then
+        PlayertwoObject:add_force(0, 5000)
+    end
     if lora.get.key.state("j") then
         PlayertwoObject:add_force(-1000, 0)
     end

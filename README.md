@@ -97,6 +97,7 @@ TODO:
 - Change physics ratio
 - Custom shaders?
 - Compiler
+- Make things optional
 ```
 
 ```
@@ -112,17 +113,6 @@ Compiler will:
      |  \- game.id.lora 
      |- Info.plist
   
-
-
-Compiler will handle paths like this:
-- Get all filepaths (ignoring lora.json)
-- u32 for length of code
-- bytes for code
-- u32 for number of filepaths
-/ - u32 for length of filepath N
-| - bytes of filepath N
-| - u32 for length of file N contents
-\ - bytes of file N
 
 Lora will handle searching compiled filepaths like this:
 - Read length of code
