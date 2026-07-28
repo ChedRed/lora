@@ -1,7 +1,7 @@
 use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded}, select};
-use std::{fs, path, process::exit, sync::Arc, thread::JoinHandle};
+use std::{process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
 use winit::{application::ApplicationHandler, event::MouseScrollDelta, platform::wayland::WindowAttributesExtWayland};
 use winit::dpi::PhysicalSize;
@@ -14,9 +14,10 @@ use wgpu::{naga::FastHashMap, util::DeviceExt};
 pub mod content;
 use content::{shape::{LoraShape, LoraShapeRef}, collider::{LoraCollider, LoraColliderRef}, spawner::{LoraSpawner, LoraSpawnerRef, LoraObjectRef}};
 pub mod utils;
-use utils::{GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*, get_image};
+use utils::{filer::Filer, GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*, get_image};
 pub mod compiler;
 use compiler::compile;
+
 
 #[derive(Parser, Debug)]
 #[command(name = "lora")]
@@ -35,10 +36,10 @@ pub struct Args {
     #[arg(long)]
     devbug: bool,
 
-    #[arg(long)]
-    compile: bool,
+    #[arg(long, conflicts_with = "filepath")]
+    compile: Option<String>,
     
-    filepath: String, // TODO: Make optional, have it check ./main.lua, ./*.lora, and platform-specific locations for .lora
+    filepath: Option<String>, // TODO: Make optional, have it check ./main.lua, ./*.lora, and platform-specific locations for .lora
 }
 
 
@@ -66,6 +67,7 @@ impl GPUView {
 
 struct State {
     argus: Args,
+    filer: Filer,
     
     current_time: chrono::DateTime<chrono::Utc>,
     last_time: chrono::DateTime<chrono::Utc>,
@@ -131,16 +133,10 @@ impl State {
             infoln("Debug mode activated");
         }
 
-        let lua_code: String;
-        match fs::read_to_string(&argus.filepath) {
-            Ok(file) => {
-                lua_code = file;
-            }
-            Err(e) => {
-                errorln(&e);
-                exit(e.raw_os_error().unwrap_or_default());
-            }
-        }
+        let filer: Filer = Filer::new(&argus.filepath);
+        
+        let lua_code: String = filer.read_code();
+        
         
         let mouse: (f32, f32) = (0., 0.);
         let keys: Vec<String> = Vec::new();
@@ -407,7 +403,8 @@ impl State {
 
         let mut state = State {
             argus,
-
+            filer,
+            
             current_time: chrono::Utc::now(),
             last_time: chrono::Utc::now(),
             timestep: chrono::Utc::now(),
@@ -738,7 +735,7 @@ impl State {
                 let mut vertices: Vec<Vertex> = Vec::new();
                 let mut indices: Vec<u32> = Vec::new();
                 
-                let (image_bytes, image_scale) = get_image(path::Path::new(&self.argus.filepath).parent().unwrap().to_str().unwrap().to_string(), image);
+                let (image_bytes, image_scale) = get_image(self.filer.read_file(image).unwrap());
                 vertices.push(Vertex { position: [0., 0.], uv: [0., 0.], color: [1., 1., 1., 1.] });
                 vertices.push(Vertex { position: [image_scale.0 as f32 * scale, 0.], uv: [1., 0.], color: [1., 1., 1., 1.] });
                 vertices.push(Vertex { position: [0., image_scale.1 as f32 * scale], uv: [0., 1.], color: [1., 1., 1., 1.] });
@@ -1058,8 +1055,8 @@ impl ApplicationHandler for App {
 
 fn main() {
     let argus: Args = Args::parse();
-    if argus.compile {
-        compile(argus);
+    if argus.compile.is_some() {
+        compile(argus.compile.unwrap());
         exit(0);
     }
     

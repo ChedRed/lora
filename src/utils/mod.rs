@@ -1,8 +1,9 @@
 pub mod transform;
 pub mod lora;
 pub mod print;
+pub mod filer;
 
-use std::path;
+use std::io::Cursor;
 
 use image::EncodableLayout;
 use transform::Vector2;
@@ -376,8 +377,9 @@ impl GPUPrimitives {
     }
 }
 
-pub fn get_image(prefix: String, image: String) -> (Vec<u8>, (u32, u32)) {
-    let img = image::ImageReader::open(path::Path::new(&prefix).join(&image)).unwrap().decode().unwrap();
+pub fn get_image(data: &Vec<u8>) -> (Vec<u8>, (u32, u32)) {
+    let cursor = Cursor::new(data);
+    let img = image::ImageReader::new(cursor).with_guessed_format().unwrap().decode().unwrap();
     let real_img = img.as_rgba8().unwrap();
 
     let dimensions = real_img.dimensions();

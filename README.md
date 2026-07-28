@@ -95,9 +95,11 @@ TODO:
 - Make github workflow work
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
 - Change physics ratio
+
 - Custom shaders?
 - Compiler
 - Make things optional
+- Make compiled .lora and window id use name from lora.json
 ```
 
 ```

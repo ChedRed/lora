@@ -1,25 +1,25 @@
 use std::{ffi::OsStr, fs, path::Path};
 
-use crate::{Args, utils::print::errorln};
+use crate::utils::print::errorln;
 
-pub fn compile(argus: Args) {
-    let (pathnames, _manifest, lua) = iterate_dir(argus.filepath.clone());
+pub fn compile(filepath: String) {
+    let (pathnames, _manifest, lua) = iterate_dir(&filepath);
     let mut bytes: Vec<u8> = Vec::new();
 
-    write_file(&mut bytes, &lua, &argus.filepath);
+    write_file(&mut bytes, &lua, &filepath);
 
     for path in pathnames {
         write_string(&mut bytes, &path);
-        write_file(&mut bytes, &path, &argus.filepath);
+        write_file(&mut bytes, &path, &filepath);
     }
 
-    match fs::write("output/app.lora", bytes) {
+    match fs::write("output/app.lora", bytes) { // TODO: Add output dir param
         Ok(()) => {}
         Err(e) => { errorln(&e); }
     }
 }
 
-fn iterate_dir(path: String) -> (Vec<String>, String, String) {
+fn iterate_dir(path: &String) -> (Vec<String>, String, String) {
     let mut real_paths: Vec<String> = Vec::new();
     let mut manifest: Option<String> = None;
     let mut lua: Option<String> = None;
