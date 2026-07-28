@@ -25,13 +25,13 @@ fn iterate_dir(path: &String) -> (Vec<String>, String, String) {
     let mut lua: Option<String> = None;
     
     
-    for entry in fs::read_dir(path.clone()).unwrap() {
+    for entry in fs::read_dir(path).unwrap() {
         let enry = entry.unwrap().path();
         if enry.is_dir() {
-            let mut new_iteration = iterate_subdir(enry.to_str().unwrap().to_string(), path.clone());
+            let mut new_iteration = iterate_subdir(&enry.to_str().unwrap().to_string(), path);
             real_paths.append(&mut new_iteration);
         } else if enry.is_file() {
-            let new_path = enry.strip_prefix(path.clone())
+            let new_path = enry.strip_prefix(path)
                 .unwrap().to_str().unwrap().to_string();
             if enry.file_name() == Some(OsStr::new("lora.json")) {
                 manifest = Some(new_path);
@@ -45,16 +45,16 @@ fn iterate_dir(path: &String) -> (Vec<String>, String, String) {
     (real_paths, manifest.unwrap(), lua.unwrap())
 }
 
-fn iterate_subdir(path: String, prefix: String) -> Vec<String> {
+fn iterate_subdir(path: &String, prefix: &String) -> Vec<String> {
     let mut real_paths: Vec<String> = Vec::new();
     
     for entry in fs::read_dir(path).unwrap() {
         let enry = entry.unwrap().path();
         if enry.is_dir() {
-            let mut new_iteration = iterate_subdir(enry.to_str().unwrap().to_string(), prefix.clone());
+            let mut new_iteration = iterate_subdir(&enry.to_str().unwrap().to_string(), prefix);
             real_paths.append(&mut new_iteration);
         } else if enry.is_file() {
-            real_paths.push(enry.strip_prefix(prefix.clone())
+            real_paths.push(enry.strip_prefix(prefix)
                 .unwrap().to_str().unwrap().to_string());
         }
     };

@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fs, path::{self, PathBuf}, process::exit};
+use std::{ffi::OsStr, fs, path::{self, Path, PathBuf}, process::exit};
 
 use wgpu::naga::FastHashMap;
 
@@ -11,59 +11,28 @@ pub struct Filer {
 
 impl Filer {
     pub fn new(cwp: &Option<String>) -> Self {
-        let mut lora: Option<String> = None;
-        let mut lora_files: Option<FastHashMap<String, Vec<u8>>> = None;
+        let lora: String;
+        let lora_files: FastHashMap<String, Vec<u8>>;
         
         if let Some(real_cwp) = cwp {
-            let real_path = path::Path::new(real_cwp);
+            let real_path = Path::new(real_cwp);
 
             if real_path.is_dir() { // lora ./tests
-                let prefix = real_path.to_str().unwrap().to_string();
-                let folder_result = check_first_folder_type(&prefix);
-                
-                if folder_result == 1u8 {
-                    erorln("Nah not yet mate");
-                    exit(1);
-                    // let parse_result = parse_first_folder(&prefix);
-                    // lora = Some(parse_result.0);
-                    // lora_files = Some(parse_result.1);
-                } else if folder_result == 2u8 {
-                    let parse_result = parse_lora_folder(&prefix);
-                    lora = Some(parse_result.0);
-                    lora_files = Some(parse_result.1);
-                } else {
-                    erorln("Folder provided does not contain main.lua or a .lora file!");
-                    exit(4);
-                }
-                
+                (lora, lora_files) = check_dir(real_path);
             } else if real_path.is_file() { // lora tests/<codefile>
-                let file_result = check_code_type(real_path.to_path_buf());
-                
-                if file_result == 1u8 {
-                    erorln("Nah not yet mate");
-                    exit(1);
-                    // let parse_result = parse_first_folder(&real_path.parent().unwrap().to_str().unwrap().to_string());
-                    // lora = Some(parse_result.0);
-                    // lora_files = Some(parse_result.1);
-                    
-                } else if file_result == 2u8 {
-                    let parse_result = parse_lora(real_path.to_str().unwrap().to_string());
-                    lora = Some(parse_result.0);
-                    lora_files = Some(parse_result.1);
-                } else {
-                    erorln("File provided is not main.lua or a .lora file!");
-                    exit(4);
-                }
+                (lora, lora_files) = check_file(real_path);
             } else {
                 erorln("Path provided could not be decrypted!");
                 exit(4);
             }
+        } else {
+            (lora, lora_files) = check_dir(Path::new("."));
         }
         
         
         Self {
-            lora: lora.unwrap(),
-            lora_files: lora_files.unwrap(),
+            lora: lora,
+            lora_files: lora_files,
         }
     }
 
@@ -76,8 +45,59 @@ impl Filer {
     }
 }
 
+fn check_dir(dir: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
+    let code: String;
+    let files: FastHashMap<String, Vec<u8>>;
+    
+    let prefix = dir.to_str().unwrap().to_string();
+    let folder_result = check_first_folder_type(&prefix);
+    
+    if folder_result == 1u8 {
+        let parse_result = parse_first_folder(&prefix);
+        code = parse_result.0;
+        files = parse_result.1;
+    } else if folder_result == 2u8 {
+        let parse_result = parse_lora_folder(&prefix);
+        code = parse_result.0;
+        files = parse_result.1;
+    } else {
+        erorln("Folder provided does not contain main.lua or a .lora file!");
+        exit(4);
+    }
+
+    (code, files)
+}
+
+fn check_file(file: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
+    let code: String;
+    let files: FastHashMap<String, Vec<u8>>;
+
+    let file_result = check_code_type(file.to_path_buf());
+    
+    if file_result == 1u8 {
+        let mut parse_path = file.parent().unwrap().to_str().unwrap().to_string();
+        if parse_path.is_empty() {
+            parse_path = ".".to_string();
+        }
+        let parse_result = parse_first_folder(&parse_path);
+        code = parse_result.0;
+        files = parse_result.1;
+        
+    } else if file_result == 2u8 {
+        let parse_result = parse_lora(file.to_str().unwrap().to_string());
+        code = parse_result.0;
+        files = parse_result.1;
+    } else {
+        erorln("File provided is not main.lua or a .lora file!");
+        exit(4);
+    }
+
+    (code, files)
+}
+
+
 fn check_first_folder_type(prefix: &String) -> u8 {
-    for entry in path::Path::new(&prefix).read_dir().expect("Parsing the first folder failed!") {
+    for entry in Path::new(&prefix).read_dir().expect("Parsing the first folder failed!") {
         if let Ok(file) = entry {
              if file.path().is_file() {
                  let file_result = check_code_type(file.path());
@@ -100,13 +120,44 @@ pub fn check_code_type(filepath: PathBuf) -> u8 { // 0: NA, 1: main.lua, 2: *.lo
     0u8
 }
 
-// fn parse_first_folder(prefix: &String) -> (String, FastHashMap<String, Vec<u8>>) {
-    
-// }
+fn parse_first_folder(prefix: &String) -> (String, FastHashMap<String, Vec<u8>>) {
+    let mut code: Option<String> = None;
+    let mut files: FastHashMap<String, Vec<u8>> = FastHashMap::default();
 
-// fn parse_folder(prefix: String, path: String) -> (String, FastHashMap<String, Vec<u8>>) {
-    
-// }
+    for entry in Path::new(prefix).read_dir().expect("Parsing the first folder failed!") {
+        if let Ok(real_entry) = entry {
+            if real_entry.path().is_dir() {
+                files.extend(parse_subfolder(prefix, &real_entry.path().to_str().unwrap().to_string()));
+            } else if real_entry.path().is_file() {
+                let early_filepath = real_entry.path();
+                let current_filepath = early_filepath.strip_prefix(prefix).unwrap();
+                if current_filepath.file_name() == Some(OsStr::new("main.lua")) {
+                    code = Some(fs::read_to_string(real_entry.path()).unwrap());
+                } else if current_filepath.file_name() != Some(OsStr::new("lora.json")) {
+                    files.insert(current_filepath.to_str().unwrap().to_string(), fs::read(early_filepath).unwrap());
+                }
+            }
+        }
+    }
+    (code.unwrap(), files)
+}
+
+fn parse_subfolder(prefix: &String, path: &String) -> FastHashMap<String, Vec<u8>> {
+    let mut files: FastHashMap<String, Vec<u8>> = FastHashMap::default();
+
+    for entry in Path::new(path).read_dir().expect("Parsing the first folder failed!") {
+        if let Ok(real_entry) = entry {
+            if real_entry.path().is_dir() {
+                files.extend(parse_subfolder(prefix, &real_entry.path().to_str().unwrap().to_string()));
+            } else if real_entry.path().is_file() {
+                let early_filepath = real_entry.path();
+                let current_filepath = early_filepath.strip_prefix(prefix).unwrap();
+                files.insert(current_filepath.to_str().unwrap().to_string(), fs::read(early_filepath).unwrap());
+            }
+        }
+    }
+    files
+}
 
 fn parse_lora_folder(path: &String) -> (String, FastHashMap<String, Vec<u8>>) {
     for entry in path::Path::new(&path).read_dir().expect("Parsing the first folder failed!") {
