@@ -95,6 +95,13 @@ pub enum LoraToMainCommand {
         puid: u64,
         uid: u64,
     },
+    ObjectGetCenter {
+        puid: u64,
+    },
+    ObjectGetWorldCenter {
+        puid: u64,
+        uid: u64,
+    },
     ObjectGetMotion {
         puid: u64,
         uid: u64,
@@ -183,6 +190,12 @@ pub enum MainToLoraCommand {
     ReturnObjectGetPosition {
         position: [f32; 2],
     },
+    ReturnObjectGetCenter {
+        position: [f32; 2],
+    },
+    ReturnObjectGetWorldCenter {
+        position: [f32; 2],
+    },
     ReturnObjectGetMotion {
         motion: [f32; 2],
     },
@@ -216,6 +229,10 @@ pub enum MainToLoraCall {
     MouseScrolled {
         motion: (f32, f32),
     },
+    Collision {
+        one: u128,
+        two: u128,
+    },
     Update {
         delta: f32,
     },
@@ -231,7 +248,8 @@ pub enum LoraToMainCall {
     Mousereleased,
     MouseMoved,
     MouseScrolled,
-    Draw,
+    Collision,
+    Update,
     Render,
     GetWindowSize,
     Exit

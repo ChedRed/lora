@@ -17,6 +17,7 @@ pub struct Lora {
     lora_mousereleased: Option<mlua::Function>,
     lora_mousemoved: Option<mlua::Function>,
     lora_mousescrolled: Option<mlua::Function>,
+    lora_collision: Option<mlua::Function>,
     lora_update: Option<mlua::Function>,
     lora_render: Option<mlua::Function>,
     lora_exit: Option<mlua::Function>,
@@ -248,8 +249,9 @@ impl Lora {
         let mut lora_mousepressed: Option<mlua::Function> = None; 
         let mut lora_mousereleased: Option<mlua::Function> = None; 
         let mut lora_mousemoved: Option<mlua::Function> = None; 
-        let mut lora_mousescrolled: Option<mlua::Function> = None; 
-        let mut lora_update: Option<mlua::Function> = None; 
+        let mut lora_mousescrolled: Option<mlua::Function> = None;
+        let mut lora_collision: Option<mlua::Function> = None;
+        let mut lora_update: Option<mlua::Function> = None;
         let mut lora_render: Option<mlua::Function> = None;
         let mut lora_exit: Option<mlua::Function> = None;
         
@@ -316,6 +318,15 @@ impl Lora {
             }
             _ => {}
         }
+        match lhk.get::<Function>("collision") {
+            Ok(func) => {
+                lora_collision = Some(func);
+                if verbose {
+                    vbosln("Loaded function 'collision'");
+                }
+            }
+            _ => {}
+        }
         match lhk.get::<Function>("update") {
             Ok(func) => {
                 lora_update = Some(func);
@@ -357,6 +368,7 @@ impl Lora {
             lora_mousereleased,
             lora_mousemoved,
             lora_mousescrolled,
+            lora_collision,
             lora_update,
             lora_render,
             lora_exit,
@@ -429,6 +441,15 @@ impl Lora {
                     }
                     _= self.main_back.send(LoraToMainCall::MouseScrolled);
                 }
+                MainToLoraCall::Collision { one, two } => {
+                    match &self.lora_collision {
+                        Some(func) => {
+                            _= func.call::<()>((one, two));
+                        }
+                        _ => {}
+                    }
+                    _= self.main_back.send(LoraToMainCall::Collision);
+                }
                 MainToLoraCall::Update { delta } => {
                     match &self.lora_update {
                         Some(func) => {
@@ -436,7 +457,7 @@ impl Lora {
                         }
                         _ => {}
                     }
-                    _= self.main_back.send(LoraToMainCall::Draw);
+                    _= self.main_back.send(LoraToMainCall::Update);
                 }
                 MainToLoraCall::Render => {
                     match &self.lora_render {

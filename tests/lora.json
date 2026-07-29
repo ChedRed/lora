@@ -1,6 +1,4 @@
 {
-  "package_name": "Lora Test Project",
-  "package_id": "red.ched.lora_test_project",
-  "package_version": "0.1.0",
-  "target": "all",
+  "name": "Lora Test Project",
+  "id": "red.ched.loratest"
 }

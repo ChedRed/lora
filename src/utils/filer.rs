@@ -1,16 +1,21 @@
 use std::{ffi::OsStr, fs, path::{Path, PathBuf}, process::exit};
 
+use serde_json::{Value, from_str};
 use wgpu::naga::FastHashMap;
 
-use crate::utils::print::erorln;
+use crate::utils::print::{erorln, serorln};
 
 pub struct Filer {
+    name: String,
+    id: String,
     lora: String,
     lora_files: FastHashMap<String, Vec<u8>>,
 }
 
 impl Filer {
     pub fn new(cwp: &Option<String>) -> Self {
+        let name: String;
+        let id: String;
         let lora: String;
         let lora_files: FastHashMap<String, Vec<u8>>;
         
@@ -18,22 +23,32 @@ impl Filer {
             let real_path = Path::new(real_cwp);
 
             if real_path.is_dir() { // lora ./tests
-                (lora, lora_files) = check_dir(real_path);
+                (name, id, lora, lora_files) = check_dir(real_path);
             } else if real_path.is_file() { // lora tests/<codefile>
-                (lora, lora_files) = check_file(real_path);
+                (name, id, lora, lora_files) = check_file(real_path);
             } else {
                 erorln("Path provided is not a file or directory!");
                 exit(4);
             }
         } else {
-            (lora, lora_files) = check_dir(Path::new("."));
+            (name, id, lora, lora_files) = check_dir(Path::new("."));
         }
         
         
         Self {
-            lora: lora,
-            lora_files: lora_files,
+            name,
+            id,
+            lora,
+            lora_files,
         }
+    }
+
+    pub fn read_name(&self) -> String {
+        self.name.clone()
+    }
+    
+    pub fn read_id(&self) -> String {
+        self.id.clone()
     }
 
     pub fn read_code(&self) -> String {
@@ -45,7 +60,9 @@ impl Filer {
     }
 }
 
-fn check_dir(dir: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
+fn check_dir(dir: &Path) -> (String, String, String, FastHashMap<String, Vec<u8>>) {
+    let name: String;
+    let id: String;
     let code: String;
     let files: FastHashMap<String, Vec<u8>>;
     
@@ -54,22 +71,28 @@ fn check_dir(dir: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
     
     if folder_result == 1u8 {
         let parse_result = parse_first_folder(&prefix);
-        code = parse_result.0;
-        files = parse_result.1;
+        name = parse_result.0;
+        id = parse_result.1;
+        code = parse_result.2;
+        files = parse_result.3;
     } else if folder_result == 2u8 {
         let parse_result = parse_lora_folder(&prefix);
-        code = parse_result.0;
-        files = parse_result.1;
+        name = parse_result.0;
+        id = parse_result.1;
+        code = parse_result.2;
+        files = parse_result.3;
     } else {
         erorln("Folder provided does not contain main.lua or a .lora file!");
         exit(4);
     }
 
-    (code, files)
+    (name, id, code, files)
 }
 // ../Resources/
 // 
-fn check_file(file: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
+fn check_file(file: &Path) -> (String, String, String, FastHashMap<String, Vec<u8>>) {
+    let name: String;
+    let id: String;
     let code: String;
     let files: FastHashMap<String, Vec<u8>>;
 
@@ -81,19 +104,23 @@ fn check_file(file: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
             parse_path = ".".to_string();
         }
         let parse_result = parse_first_folder(&parse_path);
-        code = parse_result.0;
-        files = parse_result.1;
+        name = parse_result.0;
+        id = parse_result.1;
+        code = parse_result.2;
+        files = parse_result.3;
         
     } else if file_result == 2u8 {
         let parse_result = parse_lora(file.to_str().unwrap().to_string());
-        code = parse_result.0;
-        files = parse_result.1;
+        name = parse_result.0;
+        id = parse_result.1;
+        code = parse_result.2;
+        files = parse_result.3;
     } else {
         erorln("File provided is not main.lua or a .lora file!");
         exit(4);
     }
 
-    (code, files)
+    (name, id, code, files)
 }
 
 
@@ -121,7 +148,9 @@ pub fn check_code_type(filepath: PathBuf) -> u8 { // 0: NA, 1: main.lua, 2: *.lo
     0u8
 }
 
-fn parse_first_folder(prefix: &String) -> (String, FastHashMap<String, Vec<u8>>) {
+fn parse_first_folder(prefix: &String) -> (String, String, String, FastHashMap<String, Vec<u8>>) {
+    let mut name: String = "Lora App".to_string();
+    let mut id: String = "red.ched.lora".to_string();
     let mut code: Option<String> = None;
     let mut files: FastHashMap<String, Vec<u8>> = FastHashMap::default();
 
@@ -134,13 +163,32 @@ fn parse_first_folder(prefix: &String) -> (String, FastHashMap<String, Vec<u8>>)
                 let current_filepath = early_filepath.strip_prefix(prefix).unwrap();
                 if current_filepath.file_name() == Some(OsStr::new("main.lua")) {
                     code = Some(fs::read_to_string(real_entry.path()).unwrap());
-                } else if current_filepath.file_name() != Some(OsStr::new("lora.json")) {
+                } else if current_filepath.file_name() == Some(OsStr::new("lora.json")) {
+                    let manifest: Value = from_str(fs::read_to_string(real_entry.path()).unwrap().as_str()).unwrap();
+                    let file_schema = from_str(include_str!("../schema/schema.json")).unwrap();
+                    let schema = jsonschema::Validator::new(&file_schema).unwrap();
+                    
+                    match schema.validate(&manifest) {
+                        Ok(()) => {
+                            let name_string = manifest["name"].to_string();
+                            name = name_string[1..name_string.len() - 1].to_string();
+            
+                            let id_string = manifest["id"].to_string();
+                            id = id_string[1..id_string.len() - 1].to_string();
+                        }
+                        Err(e) => {
+                            serorln(e.to_string());
+                            exit(5);
+                        }
+                    }
+                    
+                } else {
                     files.insert(current_filepath.to_str().unwrap().to_string(), fs::read(early_filepath).unwrap());
                 }
             }
         }
     }
-    (code.unwrap(), files)
+    (name, id, code.unwrap(), files)
 }
 
 fn parse_subfolder(prefix: &String, path: &String) -> FastHashMap<String, Vec<u8>> {
@@ -160,7 +208,7 @@ fn parse_subfolder(prefix: &String, path: &String) -> FastHashMap<String, Vec<u8
     files
 }
 
-fn parse_lora_folder(path: &String) -> (String, FastHashMap<String, Vec<u8>>) {
+fn parse_lora_folder(path: &String) -> (String, String, String, FastHashMap<String, Vec<u8>>) {
     for entry in Path::new(&path).read_dir().expect("Parsing the first folder failed!") {
         if let Ok(file) = entry {
              if file.path().is_file() {
@@ -175,14 +223,19 @@ fn parse_lora_folder(path: &String) -> (String, FastHashMap<String, Vec<u8>>) {
     exit(404);
 }
 
-fn parse_lora(path: String) -> (String, FastHashMap<String, Vec<u8>>) {
+fn parse_lora(path: String) -> (String, String, String, FastHashMap<String, Vec<u8>>) {
     let mut lorafile = fs::read(path).unwrap();
+    let name_size = read_u32(&mut lorafile);
+    let name = read_string(&mut lorafile, name_size as u64);
+    let id_size = read_u32(&mut lorafile);
+    let id = read_string(&mut lorafile, id_size as u64);
+    
     let code_size = read_u64(&mut lorafile);
     let code = read_string(&mut lorafile, code_size);
     let mut files: FastHashMap<String, Vec<u8>> = FastHashMap::default();
     while !lorafile.is_empty() {
         let path_size =  read_u32(&mut lorafile) as u64;
-        let path = std::str::from_utf8(&read_bytes(&mut lorafile, path_size).into_boxed_slice()).unwrap().to_string();
+        let path = read_string(&mut lorafile, path_size);
 
         let data_size = read_u64(&mut lorafile) as u64;
         let data = read_bytes(&mut lorafile, data_size);
@@ -190,7 +243,7 @@ fn parse_lora(path: String) -> (String, FastHashMap<String, Vec<u8>>) {
         files.insert(path, data);
     }
 
-    (code, files)
+    (name, id, code, files)
 }
 
 fn read_u64(data: &mut Vec<u8>) -> u64 {

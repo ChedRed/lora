@@ -1,7 +1,9 @@
 use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded}, select};
-use std::{process::exit, sync::Arc, thread::JoinHandle};
+use std::sync::mpsc;
+
+use std::{f32::consts::PI, process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
 use winit::{application::ApplicationHandler, event::MouseScrollDelta, platform::wayland::WindowAttributesExtWayland};
 use winit::dpi::PhysicalSize;
@@ -92,6 +94,7 @@ struct State {
     collider_id: u64,
     lora_spawners: FastHashMap<u64, LoraSpawner>,
     spawner_id: u64,
+    object_uuid: u128,
     primitives: Vec<Primitive>,
 
     window: Arc<Window>,
@@ -114,6 +117,9 @@ struct State {
     colliders: ColliderSet,
     impulse_joints: ImpulseJointSet,
     multibody_joints: MultibodyJointSet,
+    collision_recv: mpsc::Receiver<CollisionEvent>,
+    _contact_recv: mpsc::Receiver<ContactForceEvent>,
+    event_queue: ChannelEventCollector,
     ccd_solver: CCDSolver,
 
     lora_call: Sender<MainToLoraCall>,
@@ -126,19 +132,8 @@ struct State {
 }
 
 impl State {
-    async fn new(window: Arc<Window>) -> State {
-        let argus: Args = Args::parse();
-        if argus.verbose {
-            infoln("Verbose mode activated");
-        }
-        if argus.devbug {
-            infoln("Debug mode activated");
-        }
-
-        let filer: Filer = Filer::new(&argus.filepath);
-        
+    async fn new(window: Arc<Window>, argus: Args, filer: Filer) -> State {        
         let lua_code: String = filer.read_code();
-        
         
         let mouse: (f32, f32) = (0., 0.);
         let keys: Vec<String> = Vec::new();
@@ -182,6 +177,7 @@ impl State {
         let collider_id: u64 = 0;
         let lora_spawners: FastHashMap<u64, LoraSpawner> = FastHashMap::default();
         let spawner_id: u64 = 0;
+        let object_uuid: u128 = 0;
 
         let mut gpu_view: GPUView = GPUView::new();
         gpu_view.scale = [size.width as f32 / RESOLUTION, size.height as f32 / RESOLUTION];
@@ -401,6 +397,9 @@ impl State {
         let colliders = ColliderSet::new();
         let impulse_joints = ImpulseJointSet::new();
         let multibody_joints = MultibodyJointSet::new();
+        let (collision_send, collision_recv) = mpsc::channel::<CollisionEvent>();
+        let (contact_send, contact_recv) = mpsc::channel::<ContactForceEvent>();
+        let event_queue = ChannelEventCollector::new(collision_send, contact_send);
         let ccd_solver = CCDSolver::new();
 
         let mut state = State {
@@ -428,6 +427,7 @@ impl State {
             collider_id,
             lora_spawners,
             spawner_id,
+            object_uuid,
             primitives,
 
             window,
@@ -450,6 +450,9 @@ impl State {
             colliders,
             impulse_joints,
             multibody_joints,
+            collision_recv,
+            _contact_recv: contact_recv,
+            event_queue,
             ccd_solver,
             
             lora_call,
@@ -592,8 +595,21 @@ impl State {
                 &mut self.multibody_joints,
                 &mut self.ccd_solver,
                 &(),
-                &(),
+                &mut self.event_queue,
             );
+
+            while let Ok(event) = self.collision_recv.try_recv() {
+                match event {
+                    CollisionEvent::Started(collider1, collider2, _flags) => {
+                        let one = self.rigidbodies.get(self.colliders.get(collider1).unwrap().parent().unwrap()).unwrap().user_data;
+                        let two = self.rigidbodies.get(self.colliders.get(collider2).unwrap().parent().unwrap()).unwrap().user_data;
+                        _= self.lora_call.send(MainToLoraCall::Collision { one, two });
+                        self.handle_lora_loop();
+                    }
+                    CollisionEvent::Stopped(_collider1, _collider2, _flags) => {}
+                }
+            }
+
             self.timestep += self.delta;
         }
 
@@ -820,8 +836,9 @@ impl State {
             }
             LoraToMainCommand::SpawnerSpawn { uid, x, y, r } => {
                 let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&uid).unwrap();
-                let ouid: u64 = spawner.spawn(x / RESOLUTION, y / RESOLUTION, r, &mut self.rigidbodies, &mut self.colliders);
-                _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewObject { object: LoraObjectRef { puid: uid, uid: ouid, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } })
+                let ouid: u64 = spawner.spawn(self.object_uuid, x / RESOLUTION, y / RESOLUTION, r * PI/180., &mut self.rigidbodies, &mut self.colliders);
+                _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewObject { object: LoraObjectRef { puid: uid, uid: ouid, uuid: self.object_uuid, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } });
+                self.object_uuid += 1;
             }
             LoraToMainCommand::ObjectSetPosition { puid, uid, x, y } => {
                 let spawner: &LoraSpawner = self.lora_spawners.get(&puid).unwrap();
@@ -865,6 +882,26 @@ impl State {
                     }
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetPosition { position });
+            }
+            LoraToMainCommand::ObjectGetCenter { puid } => {
+                let position: [f32; 2];
+                let spawner: &LoraSpawner = self.lora_spawners.get(&puid).unwrap();
+                let preposition = spawner.center.unwrap();
+                position = [preposition.0, preposition.1];
+                _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetCenter { position });
+            }
+            LoraToMainCommand::ObjectGetWorldCenter { puid, uid } => {
+                let mut position: [f32; 2] = [0., 0.];
+                let spawner: &LoraSpawner = self.lora_spawners.get(&puid).unwrap();
+                let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
+                if let Some(real_object) = *object {
+                    if let Some(body) = self.rigidbodies.get_mut(*real_object) {
+                        let pre_position = body.center_of_mass();
+                        position[0] = pre_position.x * RESOLUTION;
+                        position[1] = pre_position.y * RESOLUTION;
+                    }
+                }
+                _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetWorldCenter { position });
             }
             LoraToMainCommand::ObjectGetMotion { puid, uid } => {
                 let mut motion: [f32; 2] = [0., 0.];
@@ -1006,11 +1043,14 @@ struct App {
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        let argus: Args = Args::parse();
+        let filer: Filer = Filer::new(&argus.filepath);
+        
         let window = Arc::new(event_loop.create_window(Window::default_attributes()
-            .with_title("Lora Application")
-            .with_name("red.ched.lora", "red.ched.lora")).unwrap());
+            .with_title(filer.read_name())
+            .with_name(filer.read_id(), filer.read_id())).unwrap());
 
-        let state = pollster::block_on(State::new(window.clone()));
+        let state = pollster::block_on(State::new(window.clone(), argus, filer));
         self.state = Some(state);
 
         window.request_redraw();

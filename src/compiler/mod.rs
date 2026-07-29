@@ -1,11 +1,41 @@
-use std::{ffi::OsStr, fs, path::Path};
+use std::{ffi::OsStr, fs, path::Path, process::exit};
 
-use crate::utils::print::errorln;
+use serde_json::from_str;
+
+use crate::utils::print::{errorln, serorln};
 
 pub fn compile(filepath: String) {
-    let (pathnames, _manifest, lua) = iterate_dir(&filepath);
+    let (pathnames, premanifest, lua) = iterate_dir(&filepath);
     let mut bytes: Vec<u8> = Vec::new();
 
+    let mut name: String = "Lora App".to_string();
+    let mut id: String = "red.ched.lora".to_string();
+
+    
+    if let Some(real_premanifest) = premanifest {
+        let real_manifest = from_str(real_premanifest.as_str()).unwrap();
+        
+        let file_schema = from_str(include_str!("../schema/schema.json")).unwrap();
+        let schema = jsonschema::Validator::new(&file_schema).unwrap();
+        
+        match schema.validate(&real_manifest) {
+            Ok(()) => {
+                let name_string = real_manifest["name"].to_string();
+                name = name_string[1..name_string.len() - 1].to_string();
+
+                let id_string = real_manifest["id"].to_string();
+                id = id_string[1..id_string.len() - 1].to_string();
+                println!("{}", name);
+            }
+            Err(e) => {
+                serorln(e.to_string());
+                exit(5);
+            }
+        }
+    }
+    
+    write_string(&mut bytes, &name);
+    write_string(&mut bytes, &id);
     write_file(&mut bytes, &lua, &filepath);
 
     for path in pathnames {
@@ -19,7 +49,7 @@ pub fn compile(filepath: String) {
     }
 }
 
-fn iterate_dir(path: &String) -> (Vec<String>, String, String) {
+fn iterate_dir(path: &String) -> (Vec<String>, Option<String>, String) {
     let mut real_paths: Vec<String> = Vec::new();
     let mut manifest: Option<String> = None;
     let mut lua: Option<String> = None;
@@ -34,7 +64,7 @@ fn iterate_dir(path: &String) -> (Vec<String>, String, String) {
             let new_path = enry.strip_prefix(path)
                 .unwrap().to_str().unwrap().to_string();
             if enry.file_name() == Some(OsStr::new("lora.json")) {
-                manifest = Some(new_path);
+                manifest = Some(fs::read_to_string(enry).unwrap());
             } else if enry.file_name() == Some(OsStr::new("main.lua")) {
                 lua = Some(new_path);
             } else {
@@ -42,7 +72,7 @@ fn iterate_dir(path: &String) -> (Vec<String>, String, String) {
             }
         }
     };
-    (real_paths, manifest.unwrap(), lua.unwrap())
+    (real_paths, manifest, lua.unwrap())
 }
 
 fn iterate_subdir(path: &String, prefix: &String) -> Vec<String> {

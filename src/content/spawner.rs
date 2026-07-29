@@ -1,6 +1,6 @@
 use crossbeam::channel::{Sender, Receiver};
 use mlua::{UserData, UserDataMethods};
-use rapier2d::{dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet}, geometry::{ColliderBuilder, ColliderSet}, math::Vec2};
+use rapier2d::{dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet}, geometry::{ColliderBuilder, ColliderSet}, math::Vec2, pipeline::ActiveEvents};
 
 use wgpu::{naga::FastHashMap, util::DeviceExt};
 use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand}};
@@ -36,6 +36,7 @@ impl UserData for LoraSpawnerRef {
 pub struct LoraObjectRef {
     pub puid: u64,
     pub uid: u64,
+    pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
     pub rx: Receiver<MainToLoraCommand>,
 }
@@ -71,6 +72,34 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_position)
         });
+        methods.add_method("get_center", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectGetCenter { puid: this.puid });
+            let mut real_position: [f32; 2] = [0., 0.];
+            while let Ok(cmd) = this.rx.recv() {
+                match cmd {
+                    MainToLoraCommand::ReturnObjectGetCenter { position } => {
+                        real_position = position;
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+            Ok(real_position)
+        });
+        methods.add_method("get_world_center", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectGetWorldCenter { puid: this.puid, uid: this.uid });
+            let mut real_position: [f32; 2] = [0., 0.];
+            while let Ok(cmd) = this.rx.recv() {
+                match cmd {
+                    MainToLoraCommand::ReturnObjectGetWorldCenter { position } => {
+                        real_position = position;
+                        break;
+                    }
+                    _ => {}
+                }
+            }
+            Ok(real_position)
+        });
         methods.add_method("get_motion", |_, this, ()| {
             _= this.tx.send(LoraToMainCommand::ObjectGetMotion { puid: this.puid, uid: this.uid });
             let mut real_motion: [f32; 2] = [0., 0.];
@@ -98,6 +127,9 @@ impl UserData for LoraObjectRef {
                 }
             }
             Ok(real_angle)
+        });
+        methods.add_method("get_uuid", |_, this, ()| {
+            Ok(this.uuid)
         });
         methods.add_method("impulse", |_, this, (x, y)| {
             _= this.tx.send(LoraToMainCommand::ObjectImpulse { puid: this.puid, uid: this.uid, x, y });
@@ -159,6 +191,7 @@ pub struct LoraSpawner {
     render: bool,
     
     pub hull: Option<ColliderBuilder>,
+    pub center: Option<(f32, f32)>,
     pub rigidhandles: FastHashMap<u64, RigidBodyHandle>,
     collision: String,
     collide: bool,
@@ -172,6 +205,7 @@ impl LoraSpawner {
         
         let mut points: Vec<Vec2> = Vec::new();
         let mut hull: Option<ColliderBuilder> = None;
+        let mut center: Option<(f32, f32)> = None;
         let rigidhandles: FastHashMap<u64, RigidBodyHandle> = FastHashMap::default();
         let mut collide: bool = false;
         let mut collision: String = "static".to_string();
@@ -188,7 +222,11 @@ impl LoraSpawner {
             hull = Some(ColliderBuilder::convex_hull(&points.clone().into_boxed_slice()).unwrap()
                 .restitution(0.2)
                 .friction(0.2)
-                .density(5.)); // TODO: Make it accessible via Lua
+                .density(5.)
+                .active_events(ActiveEvents::COLLISION_EVENTS)); // TODO: Make it accessible via Lua
+
+            let precenter = hull.clone().unwrap().build().mass_properties().local_com;
+            center = Some((precenter.x, precenter.y));
         }
 
         let mut indices: u32 = 0;
@@ -305,6 +343,7 @@ impl LoraSpawner {
             render,
             
             hull,
+            center,
             rigidhandles,
             collision,
             collide,
@@ -313,7 +352,7 @@ impl LoraSpawner {
         }
     }
 
-    pub fn spawn(&mut self, x: f32, y: f32, rotation: f32, rigidbodies: &mut RigidBodySet, colliders: &mut ColliderSet) -> u64 {
+    pub fn spawn(&mut self, uuid: u128, x: f32, y: f32, rotation: f32, rigidbodies: &mut RigidBodySet, colliders: &mut ColliderSet) -> u64 {
         if self.render {
             self.locations.insert(self.count, Location {position: [x, y], rotation: [rotation, 0.]});
         }
@@ -323,6 +362,7 @@ impl LoraSpawner {
                 rb = RigidBodyBuilder::fixed()
                     .translation(Vec2 { x, y })
                     .rotation(rotation)
+                    .user_data(uuid)
                     .build();
             } else if self.collision == "diaxial" {
                 rb = RigidBodyBuilder::dynamic()
@@ -330,12 +370,14 @@ impl LoraSpawner {
                     .rotation(rotation)
                     .ccd_enabled(true)
                     .lock_rotations()
+                    .user_data(uuid)
                     .build();
             } else {
                 rb = RigidBodyBuilder::dynamic()
                     .translation(Vec2 { x, y })
                     .rotation(rotation)
                     .ccd_enabled(true)
+                    .user_data(uuid)
                     .build();
             }
             let rb_handle = rigidbodies.insert(rb);
@@ -347,7 +389,7 @@ impl LoraSpawner {
         }
 
         self.status.insert(self.count, (true, true));
-        
+
         self.count += 1;
         self.count - 1
     }

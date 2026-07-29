@@ -69,10 +69,21 @@ Lora = {
         --- @param self Object
         --- @return number
         --- @return number
+        get_center = function(self) return 0, 0 end,
+        --- @param self Object
+        --- @return number
+        --- @return number
+        get_world_center = function(self) return 0, 0 end,
+        --- @param self Object
+        --- @return number
+        --- @return number
         get_motion = function(self) return 0, 0 end,
         --- @param self Object
         --- @return number
         get_angle = function(self) return 0 end,
+        --- @param self Object
+        --- @return number
+        get_uuid = function(self) return 0 end,
         --- @param self Object
         --- @param x number
         --- @param y number
@@ -158,6 +169,10 @@ Lora = {
     --- @param y number
     --- @return nil
     mousescrolled = function(x, y) end,
+    --- @param one number
+    --- @param two number
+    --- @return nil
+    collision = function(one, two) end,
     --- @param delta number
     --- @return nil
     update = function(delta) end,

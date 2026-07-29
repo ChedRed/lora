@@ -41,7 +41,7 @@ var<uniform> primitives: Primitives;
 @fragment
 fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> { // TODO: Make interpolation interpolate Alpha, not entire color
     var color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-    var coords = (uv * vec2<f32>(1.0, -1.0) + vec2<f32>(0.0, 1.0)) * primitives.scale;
+    var coords = (uv) * primitives.scale;
 
     for (var i: u32 = 0u; i < primitives.count; i++) {
         

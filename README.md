@@ -29,10 +29,10 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [ ] lora.new.sound(sound: String) -> lora.Sound
 [ ] lora.new.font(font: String) -> lora.Font
 
-[=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil        // TODO: ÷ 100
-[=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil                // TODO: ÷ 100
-[=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil // TODO: ÷ 100
-[ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil              // TODO: ÷ 100
+[=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
+[=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil
+[=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
+[ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil
 
 [ ] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
@@ -44,6 +44,8 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Object.set_motion(x: number, y: number) -> nil
 [=] lora.Object.set_angle(r: number) -> nil
 [=] lora.Object.get_position() -> table[x: number, y: number]
+[=] lora.Object.get_center() -> table[x: number, y: number]
+[=] lora.Object.get_world_center() -> table[x: number, y: number]
 [=] lora.Object.get_motion() -> table[x: number, y: number]
 [=] lora.Object.get_angle() -> number
 [=] lora.Object.impulse(x: number, y: number) -> nil
@@ -63,12 +65,13 @@ lora.Border.toggle() -> nil
 
 ```
 [=] lora.load() -> nil
-[=] lora.keypressed(key) -> nil
-[=] lora.keyreleased(key) -> nil
-[=] lora.mousepressed(x, y, button) -> nil
-[=] lora.mousereleased(x, y, button) -> nil
-[=] lora.mousemoved(x, y) -> nil
-[=] lora.mousescrolled(x, y) -> nil
+[=] lora.keypressed(key: string) -> nil
+[=] lora.keyreleased(key: string) -> nil
+[=] lora.mousepressed(x: number, y: number, button: number) -> nil
+[=] lora.mousereleased(x: number, y: number, button: number) -> nil
+[=] lora.mousemoved(x: number, y: number) -> nil
+[=] lora.mousescrolled(x: number, y: number) -> nil
+[ ] lora.collision(one: number, two: number) -> nil
 [=] lora.update() -> nil
 [=] lora.render() -> nil
 [=] lora.exit() -> nil
