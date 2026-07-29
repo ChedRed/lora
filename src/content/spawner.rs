@@ -188,7 +188,7 @@ impl LoraSpawner {
             hull = Some(ColliderBuilder::convex_hull(&points.clone().into_boxed_slice()).unwrap()
                 .restitution(0.2)
                 .friction(0.2)
-                .density(0.001)); // TODO: Make it accessible via Lua
+                .density(5.)); // TODO: Make it accessible via Lua
         }
 
         let mut indices: u32 = 0;

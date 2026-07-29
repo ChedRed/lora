@@ -22,7 +22,7 @@ impl Filer {
             } else if real_path.is_file() { // lora tests/<codefile>
                 (lora, lora_files) = check_file(real_path);
             } else {
-                erorln("Path provided could not be decrypted!");
+                erorln("Path provided is not a file or directory!");
                 exit(4);
             }
         } else {

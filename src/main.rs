@@ -18,6 +18,8 @@ use utils::{filer::Filer, GPUPrimitives, Location, LoraToMainCall, LoraToMainCom
 pub mod compiler;
 use compiler::compile;
 
+const RESOLUTION: f32 = 100.;
+
 
 #[derive(Parser, Debug)]
 #[command(name = "lora")]
@@ -182,7 +184,7 @@ impl State {
         let spawner_id: u64 = 0;
 
         let mut gpu_view: GPUView = GPUView::new();
-        gpu_view.scale = [size.width as f32, size.height as f32];
+        gpu_view.scale = [size.width as f32 / RESOLUTION, size.height as f32 / RESOLUTION];
         
         let gpu_view_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Viewport Buffer"),
@@ -507,7 +509,7 @@ impl State {
         self.size = new_size;
         self.configure_surface();
         let size: [u32; 2] = [self.size.width, self.size.height];
-        self.gpu_view.scale = [size[0] as f32, size[1] as f32];
+        self.gpu_view.scale = [size[0] as f32  / RESOLUTION, size[1] as f32  / RESOLUTION];
     }
     
     fn keyboard_inputs(&mut self, key: String, state: bool) {
@@ -719,7 +721,7 @@ impl State {
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
             LoraToMainCommand::SetCameraPosition { x, y } => {
-                self.gpu_view.position = [x, y];
+                self.gpu_view.position = [x / RESOLUTION, y / RESOLUTION];
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
             LoraToMainCommand::GetWindowSize => {
@@ -729,17 +731,18 @@ impl State {
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnKeyPressed { key: self.keys.contains(&key) });
             }
             LoraToMainCommand::GetCameraPosition => {
-                _= self.lora_rtrn.send(MainToLoraCommand::ReturnCameraPosition { x: self.gpu_view.position[0], y: self.gpu_view.position[1] });
+                _= self.lora_rtrn.send(MainToLoraCommand::ReturnCameraPosition { x: self.gpu_view.position[0] * RESOLUTION, y: self.gpu_view.position[1] / RESOLUTION });
             }
             LoraToMainCommand::NewImage { image, scale } => {
                 let mut vertices: Vec<Vertex> = Vec::new();
                 let mut indices: Vec<u32> = Vec::new();
-                
+
+                let new_scale = scale / RESOLUTION;
                 let (image_bytes, image_scale) = get_image(self.filer.read_file(image).unwrap());
                 vertices.push(Vertex { position: [0., 0.], uv: [0., 0.], color: [1., 1., 1., 1.] });
-                vertices.push(Vertex { position: [image_scale.0 as f32 * scale, 0.], uv: [1., 0.], color: [1., 1., 1., 1.] });
-                vertices.push(Vertex { position: [0., image_scale.1 as f32 * scale], uv: [0., 1.], color: [1., 1., 1., 1.] });
-                vertices.push(Vertex { position: [image_scale.0 as f32 * scale, image_scale.1 as f32 * scale], uv: [1., 1.], color: [1., 1., 1., 1.] });
+                vertices.push(Vertex { position: [image_scale.0 as f32 * new_scale, 0.], uv: [1., 0.], color: [1., 1., 1., 1.] });
+                vertices.push(Vertex { position: [0., image_scale.1 as f32 * new_scale], uv: [0., 1.], color: [1., 1., 1., 1.] });
+                vertices.push(Vertex { position: [image_scale.0 as f32 * new_scale, image_scale.1 as f32 * new_scale], uv: [1., 1.], color: [1., 1., 1., 1.] });
 
                 indices.push(0);
                 indices.push(1);
@@ -756,14 +759,22 @@ impl State {
                 let mut indices: Vec<u32> = Vec::new();
                 if kind == "rectangle" {
                     vertices.push(Vertex { position: [0., 0.], uv: [0., 0.], color });
-                    vertices.push(Vertex { position: [w, 0.], uv: [1., 0.], color });
-                    vertices.push(Vertex { position: [0., h], uv: [0., 1.], color });
-                    vertices.push(Vertex { position: [w, h], uv: [1., 1.], color });
+                    vertices.push(Vertex { position: [w / RESOLUTION, 0.], uv: [1., 0.], color });
+                    vertices.push(Vertex { position: [0., h / RESOLUTION], uv: [0., 1.], color });
+                    vertices.push(Vertex { position: [w / RESOLUTION, h / RESOLUTION], uv: [1., 1.], color });
 
                     indices.push(0);
                     indices.push(1);
                     indices.push(2);
                     indices.push(3);
+                } else if kind == "triangle" {
+                    vertices.push(Vertex { position: [0., 0.], uv: [0., 0.], color });
+                    vertices.push(Vertex { position: [w / RESOLUTION, 0.], uv: [1., 0.], color });
+                    vertices.push(Vertex { position: [0., h / RESOLUTION], uv: [0., 1.], color });
+
+                    indices.push(0);
+                    indices.push(1);
+                    indices.push(2);
                 }
                 self.lora_shapes.insert(self.shape_id, LoraShape::new(vertices, indices, None, None));
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewShape { shape: LoraShapeRef { uid: self.shape_id, tx: self.lora_cmd_rev.clone() } });
@@ -772,7 +783,7 @@ impl State {
             LoraToMainCommand::NewMesh { vertices, indices } => {
                 let mut new_vertices: Vec<Vertex> = Vec::new();
                 for vertex in vertices {
-                    new_vertices.push(Vertex { position: [vertex[0], vertex[1]], uv: [vertex[2], vertex[3]], color: [vertex[4], vertex[5], vertex[6], vertex[7]] });
+                    new_vertices.push(Vertex { position: [vertex[0] / RESOLUTION, vertex[1] / RESOLUTION], uv: [vertex[2], vertex[3]], color: [vertex[4], vertex[5], vertex[6], vertex[7]] });
                 }
                 
                 self.lora_shapes.insert(self.shape_id, LoraShape::new(new_vertices, indices, None, None));
@@ -809,7 +820,7 @@ impl State {
             }
             LoraToMainCommand::SpawnerSpawn { uid, x, y, r } => {
                 let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&uid).unwrap();
-                let ouid: u64 = spawner.spawn(x, y, r, &mut self.rigidbodies, &mut self.colliders);
+                let ouid: u64 = spawner.spawn(x / RESOLUTION, y / RESOLUTION, r, &mut self.rigidbodies, &mut self.colliders);
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewObject { object: LoraObjectRef { puid: uid, uid: ouid, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } })
             }
             LoraToMainCommand::ObjectSetPosition { puid, uid, x, y } => {
@@ -817,7 +828,7 @@ impl State {
                 let object: &Option<&RigidBodyHandle> = &spawner.rigidhandles.get(&uid);
                 if let Some(real_object) = *object {
                     if let Some(body) = self.rigidbodies.get_mut(*real_object) {
-                        body.set_translation(Vector2 { x, y }, true);
+                        body.set_translation(Vector2 { x: x / RESOLUTION, y: y / RESOLUTION }, true);
                     }
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
@@ -849,8 +860,8 @@ impl State {
                 if let Some(real_object) = *object {
                     if let Some(body) = self.rigidbodies.get_mut(*real_object) {
                         let pre_position = body.translation();
-                        position[0] = pre_position.x;
-                        position[1] = pre_position.y;
+                        position[0] = pre_position.x * RESOLUTION;
+                        position[1] = pre_position.y * RESOLUTION;
                     }
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetPosition { position });

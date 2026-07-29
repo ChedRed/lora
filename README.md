@@ -20,19 +20,19 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.get.mouse.position() -> table[x: number, y: number]
 [=] lora.get.camera.position() -> table[x: number, y: number]
 
+[=] lora.new.image(image: string, scale: number) -> lora.Shape
 [=] lora.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lora.Shape
 [=] lora.new.mesh(vertices: [number[]], indices: int[] | nil) -> lora.Shape
-[=] lora.new.image(image: string, scale: number) -> lora.Shape
 [ ] lora.new.border(points: Point[]) -> lora.Border
 [=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
 [=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
 [ ] lora.new.sound(sound: String) -> lora.Sound
 [ ] lora.new.font(font: String) -> lora.Font
 
-[=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
-[=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil
-[=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
-[ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil
+[=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil        // TODO: ÷ 100
+[=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil                // TODO: ÷ 100
+[=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil // TODO: ÷ 100
+[ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil              // TODO: ÷ 100
 
 [ ] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
@@ -95,6 +95,7 @@ TODO:
 - Make github workflow work
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
 - Change physics ratio
+- Collider layers
 
 - Custom shaders?
 - Compiler

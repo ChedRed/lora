@@ -46,7 +46,7 @@ fn vs_main(
     
     var pos: vec2<f32> = prepos - view.position;
     pos /= view.scale;
-    pos = pos * 2 + vec2<f32>(0.5, 0.5);
+    pos = (pos * 2) - 1;
 
     out.clip_position = vec4<f32>(pos, 0.0, 1.0);
     return out;
