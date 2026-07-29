@@ -2,7 +2,7 @@
 name = "lora"
 authors = ["Ryan Chou"]
 description = "A simple Lua framework for making complex games!"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2024"
 license-file = "LICENSE"
 readme = "README.md"
@@ -18,7 +18,7 @@ crossbeam = "0.8.4"
 glyphon = "0.12.0"
 image = "0.25.10"
 kira = "0.12.2"
-mlua = { version = "0.12.0", features = ["luajit52", "send"] }
+mlua = { version = "0.12.0", features = ["luajit52", "send", "vendored"] }
 pollster = "1.0.1"
 rapier2d = { version="0.34.0", features = ["parallel"] }
 serde = { version = "1.0.228", features = ["derive"] }

@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, fs, path::{self, Path, PathBuf}, process::exit};
+use std::{ffi::OsStr, fs, path::{Path, PathBuf}, process::exit};
 
 use wgpu::naga::FastHashMap;
 
@@ -67,7 +67,8 @@ fn check_dir(dir: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
 
     (code, files)
 }
-
+// ../Resources/
+// 
 fn check_file(file: &Path) -> (String, FastHashMap<String, Vec<u8>>) {
     let code: String;
     let files: FastHashMap<String, Vec<u8>>;
@@ -160,7 +161,7 @@ fn parse_subfolder(prefix: &String, path: &String) -> FastHashMap<String, Vec<u8
 }
 
 fn parse_lora_folder(path: &String) -> (String, FastHashMap<String, Vec<u8>>) {
-    for entry in path::Path::new(&path).read_dir().expect("Parsing the first folder failed!") {
+    for entry in Path::new(&path).read_dir().expect("Parsing the first folder failed!") {
         if let Ok(file) = entry {
              if file.path().is_file() {
                  let file_result = check_code_type(file.path());

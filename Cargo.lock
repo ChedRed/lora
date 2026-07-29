@@ -1594,7 +1594,7 @@ dependencies = [
 
 [[package]]
 name = "lora"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "bytemuck",
  "chrono",
@@ -1617,6 +1617,25 @@ name = "lru"
 version = "0.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f66e8d5d03f609abc3a39e6f08e4164ebf1447a732906d39eb9b99b7919ef39"
+
+[[package]]
+name = "lua-src"
+version = "550.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75c110c2fa33f34e0de05448e1f3eb2e0631e7a69e2d8ae1586cffc9fc9f9949"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "luajit-src"
+version = "210.7.2+b925b3e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "920cf654b23d217c550ceea57c32cd2a413ea27b6d47ed77b5ee0cf655adefa6"
+dependencies = [
+ "cc",
+ "which",
+]
 
 [[package]]
 name = "mach2"
@@ -1708,6 +1727,8 @@ dependencies = [
  "cc",
  "cfg-if",
  "libc",
+ "lua-src",
+ "luajit-src",
  "pkg-config",
 ]
 
@@ -3947,6 +3968,15 @@ dependencies = [
  "raw-window-handle",
  "static_assertions",
  "web-sys",
+]
+
+[[package]]
+name = "which"
+version = "8.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f3ef584124b911bcc3875c2f1472e80f24361ceb789bd1c62b3e9a3df9ff43c"
+dependencies = [
+ "libc",
 ]
 
 [[package]]

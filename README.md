@@ -100,6 +100,8 @@ TODO:
 - Compiler
 - Make things optional
 - Make compiled .lora and window id use name from lora.json
+- Read from common filepaths
+- Make sure paths are always relative to parent/cwd
 ```
 
 ```
@@ -125,6 +127,3 @@ Lora will handle searching compiled filepaths like this:
 | - If not, skip M bytes
 \ - All else fails, error (file not found 'filepath')
 ```
-
-Read from common filepaths
-Make sure paths are always relative to parent/cwd
