@@ -1,15 +1,21 @@
 use crossbeam::channel::Sender;
-use mlua::UserData;
+use mlua::{UserData, UserDataMethods};
 
 use crate::utils::{LoraToMainCommand, Vertex};
 
 #[derive(Clone)]
 pub struct LoraShapeRef {
-    pub uid: u64,
+    pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
 }
 
-impl UserData for LoraShapeRef {}
+impl UserData for LoraShapeRef {
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("id", |_, this, ()| {
+            Ok(this.uuid)
+        });
+    }
+}
 
 #[derive(Clone)]
 pub struct LoraShape {

@@ -8,7 +8,7 @@ use std::io::Cursor;
 use image::EncodableLayout;
 use transform::Vector2;
 
-use crate::{content::{collider::LoraColliderRef, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}}};
+use crate::{content::{border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}}};
 
 pub enum LoraToMainCommand {
     SetWindowTitle {
@@ -41,6 +41,10 @@ pub enum LoraToMainCommand {
         image: String,
         scale: f32,
     },
+    NewBorder {
+        points: Vec<[f32; 2]>,
+        indices: Option<Vec<[u32; 2]>>,
+    },
     NewShape {
         kind: String,
         w: f32,
@@ -69,91 +73,115 @@ pub enum LoraToMainCommand {
         label: u32,
     },
     SpawnerSpawn {
-        uid: u64,
+        uuid: u128,
         x: f32,
         y: f32,
         r: f32,
     },
+    BorderSetPosition {
+        uuid: u128,
+        x: f32,
+        y: f32,
+    },
+    BorderSetAngle {
+        uuid: u128,
+        r: f32,
+    },
+    BorderGetPosition {
+        uuid: u128,
+    },
+    BorderGetAngle {
+        uuid: u128,
+    },
+    BorderEnable {
+        uuid: u128,
+    },
+    BorderDisable {
+        uuid: u128,
+    },
+    BorderToggle {
+        uuid: u128,
+    },
     ObjectSetPosition {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         x: f32,
         y: f32,
     },
     ObjectSetMotion {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         x: f32,
         y: f32,
     },
     ObjectSetAngle {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         r: f32,
     },
     ObjectGetPosition {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectGetCenter {
-        puid: u64,
+        uuid: u128,
     },
     ObjectGetWorldCenter {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectGetMotion {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectGetAngle {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectImpulse {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         x: f32,
         y: f32,
     },
     ObjectAddForce {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         x: f32,
         y: f32,
     },
     ObjectAddWorldForce {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         x1: f32,
         y1: f32,
         x2: f32,
         y2: f32,
     },
     ObjectAddTorque {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
         r: f32,
     },
     ObjectShow {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectHide {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectEnable {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectDisable {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
     ObjectToggle {
-        puid: u64,
-        uid: u64,
+        parent_uuid: u128,
+        uuid: u128,
     },
 }
 
@@ -172,6 +200,9 @@ pub enum MainToLoraCommand {
     ReturnNewImage {
         image: LoraShapeRef,
     },
+    ReturnNewBorder {
+        border: LoraBorderRef,
+    },
     ReturnNewShape {
         shape: LoraShapeRef,
     },
@@ -186,6 +217,12 @@ pub enum MainToLoraCommand {
     },
     ReturnNewObject {
         object: LoraObjectRef,
+    },
+    ReturnBorderGetPosition {
+        position: [f32; 2],
+    },
+    ReturnBorderGetAngle {
+        angle: f32,
     },
     ReturnObjectGetPosition {
         position: [f32; 2],

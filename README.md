@@ -20,10 +20,10 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.get.mouse.position() -> table[x: number, y: number]
 [=] lora.get.camera.position() -> table[x: number, y: number]
 
+[=] lora.new.border(points: [number[]]) -> lora.Border
 [=] lora.new.image(image: string, scale: number) -> lora.Shape
 [=] lora.new.shape(type: string("rectangle"|"triangle"), w: number, h: number, color: number[]) -> lora.Shape
 [=] lora.new.mesh(vertices: [number[]], indices: int[] | nil) -> lora.Shape
-[ ] lora.new.border(points: Point[]) -> lora.Border
 [=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
 [=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
 [ ] lora.new.sound(sound: String) -> lora.Sound
@@ -38,8 +38,23 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [ ] lora.Sound.loop(count: number) -> nil
 [ ] lora.Sound.stop() -> nil
 
+[=] lora.Border.id() -> number
+[=] lora.Border.set_position(x: number, y: number) -> nil
+[=] lora.Border.set_angle(r: number) -> nil
+[=] lora.Border.get_position() -> table[x: number, y: number]
+[=] lora.Border.get_angle() -> number
+[=] lora.Border.enable() -> nil
+[=] lora.Border.disable() -> nil
+[=] lora.Border.toggle() -> nil
+
+[ ] lora.Shape.id() -> number
+
+[ ] lora.Collider.id() -> number
+
+[=] lora.Spawner.id() -> number
 [=] lora.Spawner.spawn(x, y, r) -> lora.Object
 
+[=] lora.Object.id() -> number
 [=] lora.Object.set_position(x: number, y: number) -> nil
 [=] lora.Object.set_motion(x: number, y: number) -> nil
 [=] lora.Object.set_angle(r: number) -> nil
@@ -71,7 +86,8 @@ lora.Border.toggle() -> nil
 [=] lora.mousereleased(x: number, y: number, button: number) -> nil
 [=] lora.mousemoved(x: number, y: number) -> nil
 [=] lora.mousescrolled(x: number, y: number) -> nil
-[ ] lora.collision(one: number, two: number) -> nil
+[=] lora.collision(one: number, two: number) -> nil
+[ ] lora.resized(x: number, y: number) -> nil
 [=] lora.update() -> nil
 [=] lora.render() -> nil
 [=] lora.exit() -> nil
@@ -100,12 +116,18 @@ TODO:
 - Change physics ratio
 - Collider layers
 
+- Either return number, number or { number, number }
+
 - Custom shaders?
 - Compiler
 - Make things optional
 - Make compiled .lora and window id use name from lora.json
 - Read from common filepaths
 - Make sure paths are always relative to parent/cwd
+- Add Sprite to be connected to Shape, make the Image creator just load the image
+  - load image
+  - Sprite uses image (slice)
+  - 
 ```
 
 ```

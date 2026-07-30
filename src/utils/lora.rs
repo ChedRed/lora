@@ -3,7 +3,7 @@ use std::process::exit;
 use crossbeam::channel::{Receiver, Sender};
 use mlua::{Function, UserDataRef};
 
-use crate::{content::{collider::LoraColliderRef, shape::LoraShapeRef, spawner::LoraSpawnerRef}, utils::{LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, print::{serorln, vbosln}}};
+use crate::{content::{border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, spawner::LoraSpawnerRef}, utils::{LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, print::{serorln, vbosln}}};
 
 pub struct Lora {
     _lua: mlua::Lua,
@@ -122,6 +122,19 @@ impl Lora {
         }).unwrap());
         
         let new = _lua.create_table().unwrap();
+        _= new.set("border", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone();
+            move |_, (points, indices)| {
+                _= tx.send(LoraToMainCommand::NewBorder { points, indices });
+                let mut new_border: Option<LoraBorderRef> = None;
+                match rx.recv().unwrap() {
+                    MainToLoraCommand::ReturnNewBorder { border } => {
+                        new_border = Some(border);
+                    }
+                    _ => {} // TODO: Error on fail here
+                }
+                Ok(new_border)
+            }
+        }).unwrap());
         _= new.set("image", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.new.shape
             move |_, (image, scale)| {
                 _= tx.send(LoraToMainCommand::NewImage { image, scale });
@@ -195,22 +208,22 @@ impl Lora {
         
         let draw = _lua.create_table().unwrap();
         _= draw.set("rect", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.draw.rect
-            move |_, (x, y, w, h, r, color)| {
-            _= tx.send(LoraToMainCommand::DrawPrimitive { x, y, w, h, r, color, label: 0 });
+            move |_, (x, y, w, h, r, color): (f32, f32, f32, f32, f32, [f32; 4])| {
+            _= tx.send(LoraToMainCommand::DrawPrimitive { x, y, w, h, r: r.to_radians(), color, label: 0 });
             _= rx.recv();
             Ok(())
         }
         }).unwrap());
         _= draw.set("circle", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.draw.circle
-            move |_, (x, y, r, color)| {
+            move |_, (x, y, r, color): (f32, f32, f32, [f32; 4])| {
             _= tx.send(LoraToMainCommand::DrawPrimitive { x, y, w: 0., h: 0., r, color, label: 1 });
             _= rx.recv();
             Ok(())
         }
         }).unwrap());
         _= draw.set("line", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.draw.line
-            move |_, (x1, y1, x2, y2, r, color)| {
-            _= tx.send(LoraToMainCommand::DrawPrimitive { x: x1, y: y1, w: x2, h: y2, r, color, label: 2 });
+            move |_, (x1, y1, x2, y2, r, color): (f32, f32, f32, f32, f32, [f32; 4])| {
+            _= tx.send(LoraToMainCommand::DrawPrimitive { x: x1, y: y1, w: x2, h: y2, r: r.to_radians(), color, label: 2 });
             _= rx.recv();
             Ok(())
         }

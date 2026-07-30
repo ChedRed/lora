@@ -4,37 +4,48 @@
 
 --- @class Lora
 Lora = {
-    --- @class Vertex
-    --- @field position number[]
-    --- @field uv number[]
-    --- @field color number[]
-    Vertex = {},
-
-    --- @class Point
-    --- @field x number
-    --- @field y number
-    Point = {},
-
-    --- @class Color
-    --- @field r number
-    --- @field g number
-    --- @field b number
-    --- @field a number
-    Color = {},
-
     --- @class Shape
     Shape = {
         --- @param self Shape
-        --- @param text string
         --- @return nil
-        test = function(self, text) end,
+        id = function(self) end,
     },
 
     --- @class Collider
-    Collider = {},
+    Collider = {
+        --- @param self Object
+        --- @return number
+        id = function(self) return self:id() end,
+    },
 
     --- @class Border
-    Border = {},
+    Border = {
+        --- @param self Border
+        --- @param x number
+        --- @param y number
+        --- @return nil
+        set_position = function(self, x, y) end,
+        --- @param self Border
+        --- @param r number
+        --- @return nil
+        set_angle = function(self, r) end,
+        --- @param self Border
+        --- @return number
+        --- @return number
+        get_position = function(self) return self:get_position() end,
+        --- @param self Border
+        --- @return number
+        get_angle = function(self) return self:get_angle() end,
+        --- @param self Border
+        --- @return nil
+        enable = function(self) end,
+        --- @param self Border
+        --- @return nil
+        disable = function(self) end,
+        --- @param self Border
+        --- @return nil
+        toggle = function(self) end,
+    },
 
     --- @class Spawner
     Spawner = {
@@ -43,11 +54,14 @@ Lora = {
         --- @param y number
         --- @param r number
         --- @return Object
-        spawn = function(self, x, y, r) return Lora.Object end,
+        spawn = function(self, x, y, r) return self:spawn(x, y, r) end,
     },
 
     --- @class Object
     Object = {
+        --- @param self Object
+        --- @return number
+        id = function(self) return self:id() end,
         --- @param self Object
         --- @param x number
         --- @param y number
@@ -65,25 +79,22 @@ Lora = {
         --- @param self Object
         --- @return number
         --- @return number
-        get_position = function(self) return 0, 0 end,
+        get_position = function(self) return self:get_position() end,
         --- @param self Object
         --- @return number
         --- @return number
-        get_center = function(self) return 0, 0 end,
+        get_center = function(self) return self:get_center() end,
         --- @param self Object
         --- @return number
         --- @return number
-        get_world_center = function(self) return 0, 0 end,
+        get_world_center = function(self) return self:get_world_center() end,
         --- @param self Object
         --- @return number
         --- @return number
-        get_motion = function(self) return 0, 0 end,
+        get_motion = function(self) return self:get_motion() end,
         --- @param self Object
         --- @return number
-        get_angle = function(self) return 0 end,
-        --- @param self Object
-        --- @return number
-        get_uuid = function(self) return 0 end,
+        get_angle = function(self) return self:get_angle() end,
         --- @param self Object
         --- @param x number
         --- @param y number
@@ -173,6 +184,10 @@ Lora = {
     --- @param two number
     --- @return nil
     collision = function(one, two) end,
+    --- @param x number
+    --- @param y number
+    --- @return nil
+    resized = function(x, y) end,
     --- @param delta number
     --- @return nil
     update = function(delta) end,
@@ -216,20 +231,20 @@ Lora = {
         window = {
             --- @return number
             --- @return number
-            size = function() return 0, 0 end,
+            size = function() return Lora.get.window.size() end,
         },
         key = {
             --- @param key string
             --- @return boolean
-            state = function(key) return true end,
+            state = function(key) return Lora.get.key.state(key) end,
         },
         mouse = {
             --- @return number[]
-            position = function() return {0, 0} end,
+            position = function() return Lora.get.mouse.position() end,
         },
         camera = {
             --- @return number[]
-            position = function() return {0, 0} end,
+            position = function() return Lora.get.camera.position() end,
         }
     },
 
@@ -239,32 +254,33 @@ Lora = {
         --- @param h number
         --- @param color number[]
         --- @return Shape
-        shape = function(type, w, h, color) return Lora.Shape end,
+        shape = function(type, w, h, color) return Lora.new.shape(type, w, h, color) end,
         --- @param vertices [number[]]
         --- @param indices integer[] | nil
         --- @return Shape
-        mesh = function(vertices, indices) return Lora.Shape end,
+        mesh = function(vertices, indices) return Lora.new.mesh(vertices, indices) end,
         --- @param image string
         --- @param scale number
         --- @return Shape
-        image = function(image, scale) return Lora.Shape end,
-        --- @param points Point[]
+        image = function(image, scale) return Lora.new.image(image, scale) end,
+        --- @param points [number[]]
+        --- @param indices [integer[]] | nil
         --- @return Border
-        border = function(points) return Lora.Border end,
+        border = function(points, indices) return Lora.new.border(points, indices) end,
         --- @param shape Shape
         --- @param collision "static"|"diaxial"|"dynamic"
         --- @return Collider
-        collider = function(shape, collision) return Lora.Collider end,
+        collider = function(shape, collision) return Lora.new.collider(shape, collision) end,
         --- @param shape Shape | nil
         --- @param collider Collider | nil
         --- @return Spawner
-        spawner = function(shape, collider) return Lora.Spawner end,
+        spawner = function(shape, collider) return Lora.new.spawner(shape, collider) end,
         --- @param sound string
         --- @return Sound
-        sound = function(sound) return Lora.Sound end,
+        sound = function(sound) return Lora.new.sound(sound) end,
         --- @param font string
         --- @return Font
-        font = function(font) return Lora.Font end,
+        font = function(font) return Lora.new.font(font) end,
     },
 
     draw = {
@@ -298,5 +314,4 @@ Lora = {
     }
 }
 
---- @diagnostic disable-next-line
 lora = Lora

@@ -8,7 +8,7 @@ use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Locatio
 
 #[derive(Clone)]
 pub struct LoraSpawnerRef {
-    pub uid: u64,
+    pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
     pub rx: Receiver<MainToLoraCommand>,
 }
@@ -16,7 +16,7 @@ pub struct LoraSpawnerRef {
 impl UserData for LoraSpawnerRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("spawn", |_, this, (x, y, r)| {
-            _= this.tx.send(LoraToMainCommand::SpawnerSpawn { uid: this.uid, x, y, r });
+            _= this.tx.send(LoraToMainCommand::SpawnerSpawn { uuid: this.uuid, x, y, r });
             let mut real_object: Option<LoraObjectRef> = None;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -34,8 +34,7 @@ impl UserData for LoraSpawnerRef {
 
 #[derive(Clone)]
 pub struct LoraObjectRef {
-    pub puid: u64,
-    pub uid: u64,
+    pub parent_uuid: u128,
     pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
     pub rx: Receiver<MainToLoraCommand>,
@@ -43,23 +42,26 @@ pub struct LoraObjectRef {
 
 impl UserData for LoraObjectRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("id", |_, this, ()| {
+            Ok(this.uuid)
+        });
         methods.add_method("set_position", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectSetPosition { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectSetPosition { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("set_motion", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectSetMotion { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectSetMotion { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("set_angle", |_, this, r| {
-            _= this.tx.send(LoraToMainCommand::ObjectSetAngle { puid: this.puid, uid: this.uid, r });
+            _= this.tx.send(LoraToMainCommand::ObjectSetAngle { parent_uuid: this.parent_uuid, uuid: this.uuid, r });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("get_position", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetPosition { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetPosition { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -73,7 +75,7 @@ impl UserData for LoraObjectRef {
             Ok(real_position)
         });
         methods.add_method("get_center", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetCenter { puid: this.puid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetCenter { uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -87,7 +89,7 @@ impl UserData for LoraObjectRef {
             Ok(real_position)
         });
         methods.add_method("get_world_center", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetWorldCenter { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetWorldCenter { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -101,7 +103,7 @@ impl UserData for LoraObjectRef {
             Ok(real_position)
         });
         methods.add_method("get_motion", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetMotion { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetMotion { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_motion: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -115,7 +117,7 @@ impl UserData for LoraObjectRef {
             Ok(real_motion)
         });
         methods.add_method("get_angle", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetAngle { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectGetAngle { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_angle: f32 = 0.;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -128,51 +130,48 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_angle)
         });
-        methods.add_method("get_uuid", |_, this, ()| {
-            Ok(this.uuid)
-        });
         methods.add_method("impulse", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectImpulse { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectImpulse { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("add_force", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectAddForce { puid: this.puid, uid: this.uid, x, y });
+            _= this.tx.send(LoraToMainCommand::ObjectAddForce { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("add_world_force", |_, this, (x1, y1, x2, y2)| {
-            _= this.tx.send(LoraToMainCommand::ObjectAddWorldForce { puid: this.puid, uid: this.uid, x1, y1, x2, y2 });
+            _= this.tx.send(LoraToMainCommand::ObjectAddWorldForce { parent_uuid: this.parent_uuid, uuid: this.uuid, x1, y1, x2, y2 });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("add_torque", |_, this, r| {
-            _= this.tx.send(LoraToMainCommand::ObjectAddTorque { puid: this.puid, uid: this.uid, r });
+            _= this.tx.send(LoraToMainCommand::ObjectAddTorque { parent_uuid: this.parent_uuid, uuid: this.uuid, r });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("show", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectShow { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectShow { parent_uuid: this.parent_uuid, uuid: this.uuid });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("hide", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectHide { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectHide { parent_uuid: this.parent_uuid, uuid: this.uuid });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("enable", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectEnable { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectEnable { parent_uuid: this.parent_uuid, uuid: this.uuid });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("disable", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectDisable { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectDisable { parent_uuid: this.parent_uuid, uuid: this.uuid });
             _= this.rx.recv();
             Ok(())
         });
         methods.add_method("toggle", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectToggle { puid: this.puid, uid: this.uid });
+            _= this.tx.send(LoraToMainCommand::ObjectToggle { parent_uuid: this.parent_uuid, uuid: this.uuid });
             _= this.rx.recv();
             Ok(())
         });
@@ -180,10 +179,8 @@ impl UserData for LoraObjectRef {
 }
 
 pub struct LoraSpawner {
-    count: u64,
-    
     pub indices: u32,
-    pub locations: FastHashMap<u64, Location>,
+    pub locations: FastHashMap<u128, Location>,
     pub vertex_buffer: Option<wgpu::Buffer>,
     pub index_buffer: Option<wgpu::Buffer>,
     pub location_buffer: Option<wgpu::Buffer>,
@@ -192,21 +189,19 @@ pub struct LoraSpawner {
     
     pub hull: Option<ColliderBuilder>,
     pub center: Option<(f32, f32)>,
-    pub rigidhandles: FastHashMap<u64, RigidBodyHandle>,
+    pub rigidhandles: FastHashMap<u128, RigidBodyHandle>,
     collision: String,
     collide: bool,
     
-    pub status: FastHashMap<u64, (bool, bool)>,
+    pub status: FastHashMap<u128, (bool, bool)>,
 }
 
 impl LoraSpawner {
     pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, texture_layout: &wgpu::BindGroupLayout, shape: Option<LoraShape>, collider: Option<LoraCollider>) -> Self {
-        let count: u64 = 0;
-        
         let mut points: Vec<Vec2> = Vec::new();
         let mut hull: Option<ColliderBuilder> = None;
         let mut center: Option<(f32, f32)> = None;
-        let rigidhandles: FastHashMap<u64, RigidBodyHandle> = FastHashMap::default();
+        let rigidhandles: FastHashMap<u128, RigidBodyHandle> = FastHashMap::default();
         let mut collide: bool = false;
         let mut collision: String = "static".to_string();
         if let Some(real_collider) = collider {
@@ -230,7 +225,7 @@ impl LoraSpawner {
         }
 
         let mut indices: u32 = 0;
-        let locations: FastHashMap<u64, Location> = FastHashMap::default();
+        let locations: FastHashMap<u128, Location> = FastHashMap::default();
         let mut index_buffer: Option<wgpu::Buffer> = None;
         let mut vertex_buffer: Option<wgpu::Buffer> = None;
         let mut location_buffer: Option<wgpu::Buffer> = None;
@@ -329,11 +324,9 @@ impl LoraSpawner {
             }));
         }
 
-        let status: FastHashMap<u64, (bool, bool)> = FastHashMap::default();
+        let status: FastHashMap<u128, (bool, bool)> = FastHashMap::default();
         
         Self {
-            count,
-            
             indices,
             locations,
             vertex_buffer,
@@ -352,9 +345,9 @@ impl LoraSpawner {
         }
     }
 
-    pub fn spawn(&mut self, uuid: u128, x: f32, y: f32, rotation: f32, rigidbodies: &mut RigidBodySet, colliders: &mut ColliderSet) -> u64 {
+    pub fn spawn(&mut self, uuid: u128, x: f32, y: f32, rotation: f32, rigidbodies: &mut RigidBodySet, colliders: &mut ColliderSet) {
         if self.render {
-            self.locations.insert(self.count, Location {position: [x, y], rotation: [rotation, 0.]});
+            self.locations.insert(uuid, Location {position: [x, y], rotation: [rotation, 0.]});
         }
         if self.collide {
             let rb: RigidBody;
@@ -381,17 +374,14 @@ impl LoraSpawner {
                     .build();
             }
             let rb_handle = rigidbodies.insert(rb);
-            self.rigidhandles.insert(self.count, rb_handle);
+            self.rigidhandles.insert(uuid, rb_handle);
     
             if let Some(hullshape) = self.hull.as_mut() {
                 colliders.insert_with_parent(hullshape.clone(), rb_handle, rigidbodies);
             }
         }
 
-        self.status.insert(self.count, (true, true));
-
-        self.count += 1;
-        self.count - 1
+        self.status.insert(uuid, (true, true));
     }
 
     pub fn renderable(&self) -> bool {
