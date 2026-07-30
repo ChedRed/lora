@@ -43,7 +43,7 @@ pub struct Args {
     #[arg(long, conflicts_with = "filepath")]
     compile: Option<String>,
     
-    filepath: Option<String>, // TODO: Make optional, have it check ./main.lua, ./*.lora, and platform-specific locations for .lora
+    filepath: Option<String>,
 }
 
 
@@ -105,7 +105,7 @@ struct State {
     primitive_buffer: wgpu::Buffer,
     primitive_bind_group: wgpu::BindGroup,
 
-    gravity: Vec2, // TODO: allow control from Lua
+    gravity: Vec2,
     integration_parameters: IntegrationParameters,
     physics: PhysicsPipeline,
     island_manager: IslandManager,
@@ -147,7 +147,7 @@ impl State {
         let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions::default()).await.unwrap();
         let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("WGPU Device and Adapter"),
-            experimental_features: wgpu::ExperimentalFeatures::disabled(), // TODO: maybe we can use this?
+            experimental_features: wgpu::ExperimentalFeatures::disabled(),
             ..wgpu::DeviceDescriptor::default()
         }).await.unwrap();
         
@@ -645,7 +645,7 @@ impl State {
 
         renderpass.set_bind_group(0, &self.gpu_view_bind_group, &[]);
         
-        for obj in self.lora_spawners.iter_mut() { // Draw each shape. TODO: move to separate function
+        for obj in self.lora_spawners.iter_mut() {
             if obj.1.renderable() {
                 if let Some(real_vertex_buffer) = &obj.1.vertex_buffer {
                     if let Some(real_location_buffer) = &obj.1.location_buffer {
@@ -694,7 +694,7 @@ impl State {
 
         self.queue.write_buffer(&self.primitive_buffer, 0, &bytemuck::bytes_of(&[primitive_box]));
         renderpass.set_bind_group(0, &self.primitive_bind_group, &[]);
-        renderpass.draw(0..3, 0..1); // TODO: Only do if any primitive drawing function is called
+        renderpass.draw(0..3, 0..1);
         
         drop(renderpass);
 
@@ -804,7 +804,7 @@ impl State {
                 let mut new_vertices: Vec<Vertex> = Vec::new();
                 for vertex in vertices {
                     new_vertices.push(Vertex { position: [vertex[0] / RESOLUTION, vertex[1] / RESOLUTION], uv: [vertex[2], vertex[3]], color: [vertex[4], vertex[5], vertex[6], vertex[7]] });
-                } // TODO: Optional indices
+                }
                 
                 self.lora_shapes.insert(self.uuid, LoraShape::new(new_vertices, indices, None, None));
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewMesh { mesh: LoraShapeRef { uuid: self.uuid, tx: self.lora_cmd_rev.clone() } });

@@ -43,7 +43,7 @@ pub fn compile(filepath: String) {
         write_file(&mut bytes, &path, &filepath);
     }
 
-    match fs::write("output/app.lora", bytes) { // TODO: Add output dir param
+    match fs::write("output/app.lora", bytes) {
         Ok(()) => {}
         Err(e) => { errorln(&e); }
     }

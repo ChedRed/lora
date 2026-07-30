@@ -198,7 +198,6 @@ Lora = {
 
     set = {
         window = {
-            -- Thingaling! // TODO: Create descriptions for functions
             --- @param text string
             --- @return nil
             title = function(text) end,

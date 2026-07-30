@@ -130,7 +130,7 @@ impl Lora {
                     MainToLoraCommand::ReturnNewBorder { border } => {
                         new_border = Some(border);
                     }
-                    _ => {} // TODO: Error on fail here
+                    _ => {}
                 }
                 Ok(new_border)
             }

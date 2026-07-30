@@ -108,15 +108,23 @@ TODO:
 - Enforce at least one physics tick before rendering, unless lora.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
 - Add safeguard to prevent pushing static objects, or objects without colliders (or at least warning)
+- Create descriptions for functions in lora_meta.lua
+- Add output dir param for compiler
+- Make density, friction, etc. accessible via Lua
 
-- Refactor
+- Replace 200 instances/everything with a reasonable number
 - Handle exceptions for when lora.update and/or lora.render is not present
 - Make github workflow work
 - Add friction, density, etc. as well as ticks/second and _ lua-changeable
 - Change physics ratio
 - Collider layers
 
+- Refactor
+  - Move rendering Objects to separate function
+
 - Either return number, number or { number, number }
+
+- Make texture sampler owned by Main?
 
 - Custom shaders?
 - Compiler
@@ -127,7 +135,16 @@ TODO:
 - Add Sprite to be connected to Shape, make the Image creator just load the image
   - load image
   - Sprite uses image (slice)
-  - 
+
+- Organize TODO section
+- Make filer search platform-specific locations for .lora when filepath is not provided
+- Make sure to Render only if any primitive drawing function is called
+- Make sure to update and render objects if objects EXIST
+- Texture data with Mesh? Or stuff with Sprite
+- Make interpolation of Primitives interpolate Alpha, not entire color
+- Make lora functions error/fail on incorrect thingaling
+
+- FUTURE: Advanced functions/capabilities via wgpu::ExperimentalFeatures::enabled()
 ```
 
 ```

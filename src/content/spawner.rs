@@ -218,7 +218,7 @@ impl LoraSpawner {
                 .restitution(0.2)
                 .friction(0.2)
                 .density(5.)
-                .active_events(ActiveEvents::COLLISION_EVENTS)); // TODO: Make it accessible via Lua
+                .active_events(ActiveEvents::COLLISION_EVENTS));
 
             let precenter = hull.clone().unwrap().build().mass_properties().local_com;
             center = Some((precenter.x, precenter.y));
@@ -246,7 +246,7 @@ impl LoraSpawner {
                 usage: wgpu::BufferUsages::VERTEX,
             }));
             
-            location_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor { // TODO: Replace 200 with a reasonable number
+            location_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some("Location Buffer"),
                 size: (size_of::<Location>() * 200) as u64,
                 usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
@@ -298,7 +298,7 @@ impl LoraSpawner {
             );
 
             let texture_view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-            let sampler = device.create_sampler(&wgpu::SamplerDescriptor { // TODO: Make it owned by Main
+            let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
                 address_mode_u: wgpu::AddressMode::ClampToEdge,
                 address_mode_v: wgpu::AddressMode::ClampToEdge,
                 address_mode_w: wgpu::AddressMode::ClampToEdge,
