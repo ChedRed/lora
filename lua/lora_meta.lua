@@ -7,19 +7,22 @@ Lora = {
     --- @class Shape
     Shape = {
         --- @param self Shape
-        --- @return nil
-        id = function(self) end,
+        --- @return number
+        id = function(self) return self:id() end,
     },
 
     --- @class Collider
     Collider = {
-        --- @param self Object
+        --- @param self Collider
         --- @return number
         id = function(self) return self:id() end,
     },
 
     --- @class Border
     Border = {
+        --- @param self Border
+        --- @return number
+        id = function(self) return self:id() end,
         --- @param self Border
         --- @param x number
         --- @param y number
@@ -32,10 +35,10 @@ Lora = {
         --- @param self Border
         --- @return number
         --- @return number
-        get_position = function(self) return self:get_position() end,
+        position = function(self) return self:position() end,
         --- @param self Border
         --- @return number
-        get_angle = function(self) return self:get_angle() end,
+        angle = function(self) return self:angle() end,
         --- @param self Border
         --- @return nil
         enable = function(self) end,
@@ -49,6 +52,9 @@ Lora = {
 
     --- @class Spawner
     Spawner = {
+        --- @param self Spawner
+        --- @return number
+        id = function(self) return self:id() end,
         --- @param self Spawner
         --- @param x number
         --- @param y number
@@ -79,22 +85,22 @@ Lora = {
         --- @param self Object
         --- @return number
         --- @return number
-        get_position = function(self) return self:get_position() end,
+        position = function(self) return self:position() end,
         --- @param self Object
         --- @return number
         --- @return number
-        get_center = function(self) return self:get_center() end,
+        center = function(self) return self:center() end,
         --- @param self Object
         --- @return number
         --- @return number
-        get_world_center = function(self) return self:get_world_center() end,
+        world_center = function(self) return self:world_center() end,
         --- @param self Object
         --- @return number
         --- @return number
-        get_motion = function(self) return self:get_motion() end,
+        motion = function(self) return self:motion() end,
         --- @param self Object
         --- @return number
-        get_angle = function(self) return self:get_angle() end,
+        angle = function(self) return self:angle() end,
         --- @param self Object
         --- @param x number
         --- @param y number

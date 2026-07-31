@@ -100,9 +100,9 @@ end
 function lora.render()
     local drawpos;
     if PlayerIt then
-        drawpos = PlayerObject:get_world_center()
+        drawpos = PlayerObject:world_center()
     else
-        drawpos = PlayertwoObject:get_world_center()
+        drawpos = PlayertwoObject:world_center()
     end
     lora.draw.circle(drawpos[1], drawpos[2] + 50, 10, { 1, 1, 1, 1 })
 end

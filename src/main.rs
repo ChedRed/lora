@@ -857,14 +857,14 @@ impl State {
                 body.set_next_kinematic_rotation(Rot2 { re: r.to_radians().cos(), im: r.to_radians().sin() });
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::BorderGetPosition { uuid } => {
+            LoraToMainCommand::BorderPosition { uuid } => {
                 let border: &mut LoraBorder = self.lora_borders.get_mut(&uuid).unwrap();
                 let body = self.rigidbodies.get_mut(border.rigidhandle).unwrap();
                 let preposition = body.translation();
                 let position: [f32; 2] = [preposition.x * RESOLUTION, preposition.y * RESOLUTION];
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnBorderGetPosition { position });
             }
-            LoraToMainCommand::BorderGetAngle { uuid } => {
+            LoraToMainCommand::BorderAngle { uuid } => {
                 let border: &mut LoraBorder = self.lora_borders.get_mut(&uuid).unwrap();
                 let body = self.rigidbodies.get_mut(border.rigidhandle).unwrap();
                 let angle = body.rotation().angle();
@@ -912,7 +912,7 @@ impl State {
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::ObjectGetPosition { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectPosition { parent_uuid, uuid } => {
                 let mut position: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -923,14 +923,14 @@ impl State {
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetPosition { position });
             }
-            LoraToMainCommand::ObjectGetCenter { uuid } => {
+            LoraToMainCommand::ObjectCenter { uuid } => {
                 let position: [f32; 2];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&uuid).unwrap();
                 let preposition = spawner.center.unwrap();
                 position = [preposition.0, preposition.1];
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetCenter { position });
             }
-            LoraToMainCommand::ObjectGetWorldCenter { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectWorldCenter { parent_uuid, uuid } => {
                 let mut position: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -941,7 +941,7 @@ impl State {
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetWorldCenter { position });
             }
-            LoraToMainCommand::ObjectGetMotion { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectMotion { parent_uuid, uuid } => {
                 let mut motion: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -952,7 +952,7 @@ impl State {
                 }
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnObjectGetMotion { motion });
             }
-            LoraToMainCommand::ObjectGetAngle { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectAngle { parent_uuid, uuid } => {
                 let mut angle: f32 = 0.;
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -995,14 +995,14 @@ impl State {
             }
             LoraToMainCommand::ObjectShow { parent_uuid, uuid } => {
                 let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&parent_uuid).unwrap();
-                let status: &mut (bool, bool) = spawner.status.get_mut(&uuid).unwrap();
-                status.0 = true;
+                let status: &mut bool = spawner.status.get_mut(&uuid).unwrap();
+                *status = true;
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
             LoraToMainCommand::ObjectHide { parent_uuid, uuid } => {
                 let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&parent_uuid).unwrap();
-                let status: &mut (bool, bool) = spawner.status.get_mut(&uuid).unwrap();
-                status.0 = false;
+                let status: &mut bool = spawner.status.get_mut(&uuid).unwrap();
+                *status = false;
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
             LoraToMainCommand::ObjectEnable { parent_uuid, uuid } => {

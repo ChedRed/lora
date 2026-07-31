@@ -41,15 +41,15 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Border.id() -> number
 [=] lora.Border.set_position(x: number, y: number) -> nil
 [=] lora.Border.set_angle(r: number) -> nil
-[=] lora.Border.get_position() -> table[x: number, y: number]
-[=] lora.Border.get_angle() -> number
+[=] lora.Border.position() -> table[x: number, y: number]
+[=] lora.Border.angle() -> number
 [=] lora.Border.enable() -> nil
 [=] lora.Border.disable() -> nil
 [=] lora.Border.toggle() -> nil
 
-[ ] lora.Shape.id() -> number
+[=] lora.Shape.id() -> number
 
-[ ] lora.Collider.id() -> number
+[=] lora.Collider.id() -> number
 
 [=] lora.Spawner.id() -> number
 [=] lora.Spawner.spawn(x, y, r) -> lora.Object
@@ -58,11 +58,11 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Object.set_position(x: number, y: number) -> nil
 [=] lora.Object.set_motion(x: number, y: number) -> nil
 [=] lora.Object.set_angle(r: number) -> nil
-[=] lora.Object.get_position() -> table[x: number, y: number]
-[=] lora.Object.get_center() -> table[x: number, y: number]
-[=] lora.Object.get_world_center() -> table[x: number, y: number]
-[=] lora.Object.get_motion() -> table[x: number, y: number]
-[=] lora.Object.get_angle() -> number
+[=] lora.Object.position() -> table[x: number, y: number]
+[=] lora.Object.center() -> table[x: number, y: number]
+[=] lora.Object.world_center() -> table[x: number, y: number]
+[=] lora.Object.motion() -> table[x: number, y: number]
+[=] lora.Object.angle() -> number
 [=] lora.Object.impulse(x: number, y: number) -> nil
 [=] lora.Object.add_force(x: number, y: number) -> nil
 [=] lora.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
@@ -98,7 +98,7 @@ lora.Border.toggle() -> nil
 [=] Shape
 [ ] Sound
 [=] Spawner
-[ ] Border
+[=] Border
 [=] Object
 [=] Collider
 ```
@@ -143,6 +143,7 @@ TODO:
 - Texture data with Mesh? Or stuff with Sprite
 - Make interpolation of Primitives interpolate Alpha, not entire color
 - Make lora functions error/fail on incorrect thingaling
+- Change .id() and others() to .id and others
 
 - FUTURE: Advanced functions/capabilities via wgpu::ExperimentalFeatures::enabled()
 ```

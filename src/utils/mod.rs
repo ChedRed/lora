@@ -1,14 +1,19 @@
-pub mod transform;
+pub mod filer;
 pub mod lora;
 pub mod print;
-pub mod filer;
+pub mod transform;
 
 use std::io::Cursor;
 
 use image::EncodableLayout;
 use transform::Vector2;
 
-use crate::{content::{border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, spawner::{LoraObjectRef, LoraSpawnerRef}}};
+use crate::content::{
+    border::LoraBorderRef,
+    collider::LoraColliderRef,
+    shape::LoraShapeRef,
+    spawner::{LoraObjectRef, LoraSpawnerRef},
+};
 
 pub enum LoraToMainCommand {
     SetWindowTitle {
@@ -87,10 +92,10 @@ pub enum LoraToMainCommand {
         uuid: u128,
         r: f32,
     },
-    BorderGetPosition {
+    BorderPosition {
         uuid: u128,
     },
-    BorderGetAngle {
+    BorderAngle {
         uuid: u128,
     },
     BorderEnable {
@@ -119,22 +124,22 @@ pub enum LoraToMainCommand {
         uuid: u128,
         r: f32,
     },
-    ObjectGetPosition {
+    ObjectPosition {
         parent_uuid: u128,
         uuid: u128,
     },
-    ObjectGetCenter {
+    ObjectCenter {
         uuid: u128,
     },
-    ObjectGetWorldCenter {
+    ObjectWorldCenter {
         parent_uuid: u128,
         uuid: u128,
     },
-    ObjectGetMotion {
+    ObjectMotion {
         parent_uuid: u128,
         uuid: u128,
     },
-    ObjectGetAngle {
+    ObjectAngle {
         parent_uuid: u128,
         uuid: u128,
     },
@@ -186,95 +191,38 @@ pub enum LoraToMainCommand {
 }
 
 pub enum MainToLoraCommand {
-    ReturnGetWindowSize {
-        w: u32,
-        h: u32,
-    },
-    ReturnKeyPressed {
-        key: bool,
-    },
-    ReturnCameraPosition {
-        x: f32,
-        y: f32,
-    },
-    ReturnNewImage {
-        image: LoraShapeRef,
-    },
-    ReturnNewBorder {
-        border: LoraBorderRef,
-    },
-    ReturnNewShape {
-        shape: LoraShapeRef,
-    },
-    ReturnNewMesh {
-        mesh: LoraShapeRef,
-    },
-    ReturnNewCollider {
-        collider: LoraColliderRef,
-    },
-    ReturnNewSpawner {
-        spawner: LoraSpawnerRef,
-    },
-    ReturnNewObject {
-        object: LoraObjectRef,
-    },
-    ReturnBorderGetPosition {
-        position: [f32; 2],
-    },
-    ReturnBorderGetAngle {
-        angle: f32,
-    },
-    ReturnObjectGetPosition {
-        position: [f32; 2],
-    },
-    ReturnObjectGetCenter {
-        position: [f32; 2],
-    },
-    ReturnObjectGetWorldCenter {
-        position: [f32; 2],
-    },
-    ReturnObjectGetMotion {
-        motion: [f32; 2],
-    },
-    ReturnObjectGetAngle {
-        angle: f32,
-    },
+    ReturnGetWindowSize { w: u32, h: u32 },
+    ReturnKeyPressed { key: bool },
+    ReturnCameraPosition { x: f32, y: f32 },
+    ReturnNewImage { image: LoraShapeRef },
+    ReturnNewBorder { border: LoraBorderRef },
+    ReturnNewShape { shape: LoraShapeRef },
+    ReturnNewMesh { mesh: LoraShapeRef },
+    ReturnNewCollider { collider: LoraColliderRef },
+    ReturnNewSpawner { spawner: LoraSpawnerRef },
+    ReturnNewObject { object: LoraObjectRef },
+    ReturnBorderGetPosition { position: [f32; 2] },
+    ReturnBorderGetAngle { angle: f32 },
+    ReturnObjectGetPosition { position: [f32; 2] },
+    ReturnObjectGetCenter { position: [f32; 2] },
+    ReturnObjectGetWorldCenter { position: [f32; 2] },
+    ReturnObjectGetMotion { motion: [f32; 2] },
+    ReturnObjectGetAngle { angle: f32 },
     Return,
 }
 
 pub enum MainToLoraCall {
     Load,
-    Keypressed {
-        code: String,
-    },
-    Keyreleased {
-        code: String,
-    },
-    Mousepressed {
-        x: f32,
-        y: f32,
-        button: u32,
-    },
-    Mousereleased {
-        x: f32,
-        y: f32,
-        button: u32,
-    },
-    MouseMoved {
-        motion: (f32, f32),
-    },
-    MouseScrolled {
-        motion: (f32, f32),
-    },
-    Collision {
-        one: u128,
-        two: u128,
-    },
-    Update {
-        delta: f32,
-    },
+    Keypressed { code: String },
+    Keyreleased { code: String },
+    Mousepressed { x: f32, y: f32, button: u32 },
+    Mousereleased { x: f32, y: f32, button: u32 },
+    MouseMoved { motion: (f32, f32) },
+    MouseScrolled { motion: (f32, f32) },
+    Collision { one: u128, two: u128 },
+    Update { delta: f32 },
     Render,
-    Exit
+    Exit,
 }
 
 pub enum LoraToMainCall {
@@ -289,7 +237,7 @@ pub enum LoraToMainCall {
     Update,
     Render,
     GetWindowSize,
-    Exit
+    Exit,
 }
 
 pub struct Xy {
@@ -364,7 +312,6 @@ impl Location {
     }
 }
 
-
 #[derive(Clone, Copy)]
 pub struct Displacement {
     pub position: Vector2,
@@ -421,20 +368,31 @@ impl GPUPrimitives {
             count: size,
             _pad: 0,
             scale: [0., 0.],
-            data: [Primitive { xywh: [0., 0., 0., 0.], angle: 0., label: 0, _pad0: 0, _pad1: 0, color: [0., 0., 0., 0.]}; 256],
+            data: [Primitive {
+                xywh: [0., 0., 0., 0.],
+                angle: 0.,
+                label: 0,
+                _pad0: 0,
+                _pad1: 0,
+                color: [0., 0., 0., 0.],
+            }; 256],
         };
 
         for (i, p) in data.iter().take(256).enumerate() {
             primitives.data[i] = *p;
         }
-    
+
         primitives
     }
 }
 
 pub fn get_image(data: &Vec<u8>) -> (Vec<u8>, (u32, u32)) {
     let cursor = Cursor::new(data);
-    let img = image::ImageReader::new(cursor).with_guessed_format().unwrap().decode().unwrap();
+    let img = image::ImageReader::new(cursor)
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap();
     let real_img = img.as_rgba8().unwrap();
 
     let dimensions = real_img.dimensions();
@@ -444,6 +402,6 @@ pub fn get_image(data: &Vec<u8>) -> (Vec<u8>, (u32, u32)) {
     for byte in bytes {
         real_bytes.push(*byte);
     }
-    
+
     (real_bytes, dimensions)
 }

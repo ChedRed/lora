@@ -15,6 +15,9 @@ pub struct LoraSpawnerRef {
 
 impl UserData for LoraSpawnerRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("id", |_, this, ()| {
+            Ok(this.uuid)
+        });
         methods.add_method("spawn", |_, this, (x, y, r)| {
             _= this.tx.send(LoraToMainCommand::SpawnerSpawn { uuid: this.uuid, x, y, r });
             let mut real_object: Option<LoraObjectRef> = None;
@@ -60,8 +63,8 @@ impl UserData for LoraObjectRef {
             _= this.rx.recv();
             Ok(())
         });
-        methods.add_method("get_position", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetPosition { parent_uuid: this.parent_uuid, uuid: this.uuid });
+        methods.add_method("position", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectPosition { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -74,8 +77,8 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_position)
         });
-        methods.add_method("get_center", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetCenter { uuid: this.uuid });
+        methods.add_method("center", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectCenter { uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -88,8 +91,8 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_position)
         });
-        methods.add_method("get_world_center", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetWorldCenter { parent_uuid: this.parent_uuid, uuid: this.uuid });
+        methods.add_method("world_center", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectWorldCenter { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -102,8 +105,8 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_position)
         });
-        methods.add_method("get_motion", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetMotion { parent_uuid: this.parent_uuid, uuid: this.uuid });
+        methods.add_method("motion", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectMotion { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_motion: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -116,8 +119,8 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_motion)
         });
-        methods.add_method("get_angle", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectGetAngle { parent_uuid: this.parent_uuid, uuid: this.uuid });
+        methods.add_method("angle", |_, this, ()| {
+            _= this.tx.send(LoraToMainCommand::ObjectAngle { parent_uuid: this.parent_uuid, uuid: this.uuid });
             let mut real_angle: f32 = 0.;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -193,7 +196,7 @@ pub struct LoraSpawner {
     collision: String,
     collide: bool,
     
-    pub status: FastHashMap<u128, (bool, bool)>,
+    pub status: FastHashMap<u128, bool>,
 }
 
 impl LoraSpawner {
@@ -324,7 +327,7 @@ impl LoraSpawner {
             }));
         }
 
-        let status: FastHashMap<u128, (bool, bool)> = FastHashMap::default();
+        let status: FastHashMap<u128, bool> = FastHashMap::default();
         
         Self {
             indices,
@@ -381,7 +384,7 @@ impl LoraSpawner {
             }
         }
 
-        self.status.insert(uuid, (true, true));
+        self.status.insert(uuid, true);
     }
 
     pub fn renderable(&self) -> bool {
