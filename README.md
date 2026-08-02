@@ -115,8 +115,6 @@ TODO:
 - Replace 200 instances/everything with a reasonable number
 - Handle exceptions for when lora.update and/or lora.render is not present
 - Make github workflow work
-- Add friction, density, etc. as well as ticks/second and _ lua-changeable
-- Change physics ratio
 - Collider layers
 
 - Refactor
@@ -126,7 +124,6 @@ TODO:
 
 - Make texture sampler owned by Main?
 
-- Custom shaders?
 - Compiler
 - Make things optional
 - Make compiled .lora and window id use name from lora.json
@@ -143,9 +140,14 @@ TODO:
 - Texture data with Mesh? Or stuff with Sprite
 - Make interpolation of Primitives interpolate Alpha, not entire color
 - Make lora functions error/fail on incorrect thingaling
-- Change .id() and others() to .id and others
 
-- FUTURE: Advanced functions/capabilities via wgpu::ExperimentalFeatures::enabled()
+- FUTURE:
+  - Advanced functions/capabilities via wgpu::ExperimentalFeatures::enabled()
+    - Custom shaders?
+  - Move to fields over functions
+    - GETs are fields
+    - SETs are functions
+    - remove world_center and make position return it
 ```
 
 ```
