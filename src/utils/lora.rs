@@ -3,7 +3,7 @@ use std::process::exit;
 use crossbeam::channel::{Receiver, Sender};
 use mlua::{Function, UserDataRef};
 
-use crate::{content::{border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, spawner::LoraSpawnerRef}, utils::{LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, print::{serorln, vbosln}}};
+use crate::{content::{border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, sound::LoraSoundRef, spawner::LoraSpawnerRef}, utils::{LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, print::{serorln, vbosln}}};
 
 pub struct Lora {
     _lua: mlua::Lua,
@@ -203,6 +203,20 @@ impl Lora {
             }
             
             Ok(new_spawner)
+        }
+        }).unwrap());
+        _= new.set("sound", _lua.create_function({let tx = main_cmd.clone(); let rx = main_rtrn.clone(); // lora.new.sound
+            move |_, sound| {
+            _= tx.send(LoraToMainCommand::NewSound { sound });
+            let mut new_sound: Option<LoraSoundRef> = None;
+            match rx.recv().unwrap() {
+                MainToLoraCommand::ReturnNewSound { sound } => {
+                    new_sound = Some(sound);
+                }
+                _ => {}
+            }
+            
+            Ok(new_sound)
         }
         }).unwrap());
         

@@ -1,7 +1,8 @@
 use chrono::TimeDelta;
 use clap::Parser;
 use crossbeam::{channel::{Receiver, Sender, bounded}, select};
-use std::sync::mpsc;
+use rodio::{Decoder, MixerDeviceSink, Source};
+use std::{io::Cursor, sync::mpsc};
 
 use std::{process::exit, sync::Arc, thread::JoinHandle};
 use rapier2d::prelude::*;
@@ -19,6 +20,8 @@ pub mod utils;
 use utils::{filer::Filer, GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, lora::Lora, print::*, get_image};
 pub mod compiler;
 use compiler::compile;
+
+use crate::content::sound::{LoraSound, LoraSoundRef};
 
 const RESOLUTION: f32 = 100.;
 
@@ -94,6 +97,9 @@ struct State {
     lora_spawners: FastHashMap<u128, LoraSpawner>,
     uuid: u128,
     primitives: Vec<Primitive>,
+
+    lora_sounds: FastHashMap<u128, LoraSound>,
+    sink: MixerDeviceSink,
 
     window: Arc<Window>,
     gpu_view: GPUView,
@@ -174,6 +180,10 @@ impl State {
         let lora_colliders: FastHashMap<u128, LoraCollider> = FastHashMap::default();
         let lora_spawners: FastHashMap<u128, LoraSpawner> = FastHashMap::default();
         let uuid: u128 = 0;
+
+        let sink: MixerDeviceSink = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
+
+        let lora_sounds: FastHashMap<u128, LoraSound> = FastHashMap::default();
 
         let mut gpu_view: GPUView = GPUView::new();
         gpu_view.scale = [size.width as f32 / RESOLUTION, size.height as f32 / RESOLUTION];
@@ -423,6 +433,10 @@ impl State {
             lora_spawners,
             uuid,
             primitives,
+
+            sink,
+
+            lora_sounds,
 
             window,
             gpu_view,
@@ -834,6 +848,15 @@ impl State {
                 _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewSpawner { spawner: LoraSpawnerRef { uuid: self.uuid, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } });
                 self.uuid += 1;
             }
+            LoraToMainCommand::NewSound { sound } => {
+                let sound = self.filer.read_file(sound).unwrap();
+                let sound_cursor = Cursor::new(sound.clone().into_boxed_slice());
+                let source = Decoder::try_from(sound_cursor).unwrap().buffered();
+
+                self.lora_sounds.insert(self.uuid, LoraSound::new(source));
+                _= self.lora_rtrn.send(MainToLoraCommand::ReturnNewSound { sound: LoraSoundRef { uuid: self.uuid, tx: self.lora_cmd_rev.clone(), rx: self.lora_rtrn_rev.clone() } });
+                self.uuid += 1;
+            }
             LoraToMainCommand::DrawPrimitive { x, y, w, h, r, color, label } => {
                 self.primitives.push(Primitive { xywh: [x, y, w, h], angle: r, label, _pad0: 0, _pad1: 0, color });
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
@@ -1027,6 +1050,11 @@ impl State {
                 if let Some(body) = self.rigidbodies.get_mut(*object) {
                     body.set_enabled(!body.is_enabled());
                 }
+                _= self.lora_rtrn.send(MainToLoraCommand::Return);
+            }
+            LoraToMainCommand::SoundPlay { uuid } => {
+                let sound: &LoraSound = self.lora_sounds.get(&uuid).unwrap();
+                self.sink.mixer().add(sound.source.clone());
                 _= self.lora_rtrn.send(MainToLoraCommand::Return);
             }
         }

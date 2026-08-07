@@ -26,6 +26,8 @@ function lora.load()
         { 0,    1600 },
         { 0,    0 },
     })
+
+    JumpSound = lora.new.sound("resources/jump.wav")
 end
 
 function lora.collision(one, two)
@@ -45,12 +47,14 @@ function lora.keypressed(key)
         if not PlayerJumped then
             PlayerJumped = true
             PlayerObject:impulse(0, 84)
+            JumpSound:play(1, 1)
         end
     end
     if key == "i" then
         if not PlayertwoJumped then
             PlayertwoJumped = true
             PlayertwoObject:impulse(0, 84)
+            JumpSound:play(1, 1)
         end
     end
 end

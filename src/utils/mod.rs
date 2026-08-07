@@ -9,10 +9,7 @@ use image::EncodableLayout;
 use transform::Vector2;
 
 use crate::content::{
-    border::LoraBorderRef,
-    collider::LoraColliderRef,
-    shape::LoraShapeRef,
-    spawner::{LoraObjectRef, LoraSpawnerRef},
+    border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, sound::LoraSoundRef, spawner::{LoraObjectRef, LoraSpawnerRef},
 };
 
 pub enum LoraToMainCommand {
@@ -67,6 +64,9 @@ pub enum LoraToMainCommand {
     NewSpawner {
         shape: Option<LoraShapeRef>,
         collider: Option<LoraColliderRef>,
+    },
+    NewSound {
+        sound: String,
     },
     DrawPrimitive {
         x: f32,
@@ -188,6 +188,9 @@ pub enum LoraToMainCommand {
         parent_uuid: u128,
         uuid: u128,
     },
+    SoundPlay {
+        uuid: u128,
+    },
 }
 
 pub enum MainToLoraCommand {
@@ -201,6 +204,7 @@ pub enum MainToLoraCommand {
     ReturnNewCollider { collider: LoraColliderRef },
     ReturnNewSpawner { spawner: LoraSpawnerRef },
     ReturnNewObject { object: LoraObjectRef },
+    ReturnNewSound { sound: LoraSoundRef },
     ReturnBorderGetPosition { position: [f32; 2] },
     ReturnBorderGetAngle { angle: f32 },
     ReturnObjectGetPosition { position: [f32; 2] },

@@ -26,7 +26,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.new.mesh(vertices: [number[]], indices: int[] | nil) -> lora.Shape
 [=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
 [=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
-[ ] lora.new.sound(sound: String) -> lora.Sound
+[=] lora.new.sound(sound: String) -> lora.Sound
 [ ] lora.new.font(font: String) -> lora.Font
 
 [=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
@@ -34,7 +34,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
 [ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil
 
-[ ] lora.Sound.play(volume: number, pitch: number) -> nil
+[=] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
 [ ] lora.Sound.stop() -> nil
 
@@ -105,12 +105,14 @@ lora.Border.toggle() -> nil
 
 ```
 TODO:
+- Verify traits (Clone, Copy, etc.)
+- Remove all 'while let Ok()'
 - Enforce at least one physics tick before rendering, unless lora.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
 - Add safeguard to prevent pushing static objects, or objects without colliders (or at least warning)
 - Create descriptions for functions in lora_meta.lua
 - Add output dir param for compiler
-- Make density, friction, etc. accessible via Lua
+- Make density, friction, air drag, etc. accessible via Lua
 
 - Replace 200 instances/everything with a reasonable number
 - Handle exceptions for when lora.update and/or lora.render is not present
