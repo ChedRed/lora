@@ -1,10 +1,17 @@
-use crossbeam::channel::{Sender, Receiver};
+use crossbeam::channel::{Receiver, Sender};
 use mlua::{UserData, UserDataMethods};
-use rapier2d::{dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet}, geometry::{ColliderBuilder, ColliderSet}, math::Vec2, pipeline::ActiveEvents};
+use rapier2d::{
+    dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet},
+    geometry::{ColliderBuilder, ColliderSet},
+    math::Vec2,
+    pipeline::ActiveEvents,
+};
 
+use crate::{
+    content::{collider::LoraCollider, shape::LoraShape},
+    utils::{Location, LoraToMainCommand, MainToLoraCommand},
+};
 use wgpu::{naga::FastHashMap, util::DeviceExt};
-use crate::{content::{collider::LoraCollider, shape::LoraShape}, utils::{Location, LoraToMainCommand, MainToLoraCommand}};
-
 
 #[derive(Clone)]
 pub struct LoraSpawnerRef {
@@ -15,11 +22,14 @@ pub struct LoraSpawnerRef {
 
 impl UserData for LoraSpawnerRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| {
-            Ok(this.uuid)
-        });
+        methods.add_method("id", |_, this, ()| Ok(this.uuid));
         methods.add_method("spawn", |_, this, (x, y, r)| {
-            _= this.tx.send(LoraToMainCommand::SpawnerSpawn { uuid: this.uuid, x, y, r });
+            _ = this.tx.send(LoraToMainCommand::SpawnerSpawn {
+                uuid: this.uuid,
+                x,
+                y,
+                r,
+            });
             let mut real_object: Option<LoraObjectRef> = None;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -45,26 +55,41 @@ pub struct LoraObjectRef {
 
 impl UserData for LoraObjectRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| {
-            Ok(this.uuid)
-        });
+        methods.add_method("id", |_, this, ()| Ok(this.uuid));
         methods.add_method("set_position", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectSetPosition { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectSetPosition {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                x,
+                y,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("set_motion", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectSetMotion { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectSetMotion {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                x,
+                y,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("set_angle", |_, this, r| {
-            _= this.tx.send(LoraToMainCommand::ObjectSetAngle { parent_uuid: this.parent_uuid, uuid: this.uuid, r });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectSetAngle {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                r,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("position", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectPosition { parent_uuid: this.parent_uuid, uuid: this.uuid });
+            _ = this.tx.send(LoraToMainCommand::ObjectPosition {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -78,7 +103,9 @@ impl UserData for LoraObjectRef {
             Ok(real_position)
         });
         methods.add_method("center", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectCenter { uuid: this.uuid });
+            _ = this
+                .tx
+                .send(LoraToMainCommand::ObjectCenter { uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -92,7 +119,10 @@ impl UserData for LoraObjectRef {
             Ok(real_position)
         });
         methods.add_method("world_center", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectWorldCenter { parent_uuid: this.parent_uuid, uuid: this.uuid });
+            _ = this.tx.send(LoraToMainCommand::ObjectWorldCenter {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
             let mut real_position: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -106,7 +136,10 @@ impl UserData for LoraObjectRef {
             Ok(real_position)
         });
         methods.add_method("motion", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectMotion { parent_uuid: this.parent_uuid, uuid: this.uuid });
+            _ = this.tx.send(LoraToMainCommand::ObjectMotion {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
             let mut real_motion: [f32; 2] = [0., 0.];
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -120,7 +153,10 @@ impl UserData for LoraObjectRef {
             Ok(real_motion)
         });
         methods.add_method("angle", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectAngle { parent_uuid: this.parent_uuid, uuid: this.uuid });
+            _ = this.tx.send(LoraToMainCommand::ObjectAngle {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
             let mut real_angle: f32 = 0.;
             while let Ok(cmd) = this.rx.recv() {
                 match cmd {
@@ -134,48 +170,84 @@ impl UserData for LoraObjectRef {
             Ok(real_angle)
         });
         methods.add_method("impulse", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectImpulse { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectImpulse {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                x,
+                y,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("add_force", |_, this, (x, y)| {
-            _= this.tx.send(LoraToMainCommand::ObjectAddForce { parent_uuid: this.parent_uuid, uuid: this.uuid, x, y });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectAddForce {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                x,
+                y,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("add_world_force", |_, this, (x1, y1, x2, y2)| {
-            _= this.tx.send(LoraToMainCommand::ObjectAddWorldForce { parent_uuid: this.parent_uuid, uuid: this.uuid, x1, y1, x2, y2 });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectAddWorldForce {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                x1,
+                y1,
+                x2,
+                y2,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("add_torque", |_, this, r| {
-            _= this.tx.send(LoraToMainCommand::ObjectAddTorque { parent_uuid: this.parent_uuid, uuid: this.uuid, r });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectAddTorque {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+                r,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("show", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectShow { parent_uuid: this.parent_uuid, uuid: this.uuid });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectShow {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("hide", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectHide { parent_uuid: this.parent_uuid, uuid: this.uuid });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectHide {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("enable", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectEnable { parent_uuid: this.parent_uuid, uuid: this.uuid });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectEnable {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("disable", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectDisable { parent_uuid: this.parent_uuid, uuid: this.uuid });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectDisable {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
         methods.add_method("toggle", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::ObjectToggle { parent_uuid: this.parent_uuid, uuid: this.uuid });
-            _= this.rx.recv();
+            _ = this.tx.send(LoraToMainCommand::ObjectToggle {
+                parent_uuid: this.parent_uuid,
+                uuid: this.uuid,
+            });
+            _ = this.rx.recv();
             Ok(())
         });
     }
@@ -189,18 +261,24 @@ pub struct LoraSpawner {
     pub location_buffer: Option<wgpu::Buffer>,
     pub texture_bind_group: Option<wgpu::BindGroup>,
     render: bool,
-    
+
     pub hull: Option<ColliderBuilder>,
     pub center: Option<(f32, f32)>,
     pub rigidhandles: FastHashMap<u128, RigidBodyHandle>,
     collision: String,
     collide: bool,
-    
+
     pub status: FastHashMap<u128, bool>,
 }
 
 impl LoraSpawner {
-    pub fn new(device: &wgpu::Device, queue: &wgpu::Queue, texture_layout: &wgpu::BindGroupLayout, shape: Option<LoraShape>, collider: Option<LoraCollider>) -> Self {
+    pub fn new(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        texture_layout: &wgpu::BindGroupLayout,
+        shape: Option<LoraShape>,
+        collider: Option<LoraCollider>,
+    ) -> Self {
         let mut points: Vec<Vec2> = Vec::new();
         let mut hull: Option<ColliderBuilder> = None;
         let mut center: Option<(f32, f32)> = None;
@@ -211,17 +289,20 @@ impl LoraSpawner {
             collision = real_collider.collision;
             collide = true;
             for vertex in real_collider.vertices.iter() {
-                points.push(Vec2{
+                points.push(Vec2 {
                     x: vertex.position[0],
                     y: vertex.position[1],
                 })
             }
 
-            hull = Some(ColliderBuilder::convex_hull(&points.clone().into_boxed_slice()).unwrap()
-                .restitution(0.2)
-                .friction(0.2)
-                .density(5.)
-                .active_events(ActiveEvents::COLLISION_EVENTS));
+            hull = Some(
+                ColliderBuilder::convex_hull(&points.clone().into_boxed_slice())
+                    .unwrap()
+                    .restitution(0.2)
+                    .friction(0.2)
+                    .density(5.)
+                    .active_events(ActiveEvents::COLLISION_EVENTS),
+            );
 
             let precenter = hull.clone().unwrap().build().mass_properties().local_com;
             center = Some((precenter.x, precenter.y));
@@ -237,18 +318,22 @@ impl LoraSpawner {
         if let Some(real_shape) = shape {
             render = true;
             indices = real_shape.indices.len() as u32;
-            index_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(&real_shape.indices),
-                usage: wgpu::BufferUsages::INDEX,
-            }));
-            
-            vertex_buffer = Some(device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(&real_shape.vertices),
-                usage: wgpu::BufferUsages::VERTEX,
-            }));
-            
+            index_buffer = Some(
+                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Index Buffer"),
+                    contents: bytemuck::cast_slice(&real_shape.indices),
+                    usage: wgpu::BufferUsages::INDEX,
+                }),
+            );
+
+            vertex_buffer = Some(
+                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("Vertex Buffer"),
+                    contents: bytemuck::cast_slice(&real_shape.vertices),
+                    usage: wgpu::BufferUsages::VERTEX,
+                }),
+            );
+
             location_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some("Location Buffer"),
                 size: (size_of::<Location>() * 200) as u64,
@@ -257,7 +342,7 @@ impl LoraSpawner {
             }));
 
             let mut texture_size: (u32, u32) = (1, 1);
-            
+
             if real_shape.texture_bytes.is_some() {
                 texture_size = real_shape.texture_dimensions.unwrap();
             }
@@ -267,7 +352,7 @@ impl LoraSpawner {
                 height: texture_size.1,
                 depth_or_array_layers: 1,
             };
-            
+
             let texture = device.create_texture(&wgpu::TextureDescriptor {
                 label: Some("Lora Texture"),
                 size: gpu_texture_size,
@@ -328,7 +413,7 @@ impl LoraSpawner {
         }
 
         let status: FastHashMap<u128, bool> = FastHashMap::default();
-        
+
         Self {
             indices,
             locations,
@@ -337,7 +422,7 @@ impl LoraSpawner {
             location_buffer,
             texture_bind_group,
             render,
-            
+
             hull,
             center,
             rigidhandles,
@@ -348,9 +433,23 @@ impl LoraSpawner {
         }
     }
 
-    pub fn spawn(&mut self, uuid: u128, x: f32, y: f32, rotation: f32, rigidbodies: &mut RigidBodySet, colliders: &mut ColliderSet) {
+    pub fn spawn(
+        &mut self,
+        uuid: u128,
+        x: f32,
+        y: f32,
+        rotation: f32,
+        rigidbodies: &mut RigidBodySet,
+        colliders: &mut ColliderSet,
+    ) {
         if self.render {
-            self.locations.insert(uuid, Location {position: [x, y], rotation: [rotation, 0.]});
+            self.locations.insert(
+                uuid,
+                Location {
+                    position: [x, y],
+                    rotation: [rotation, 0.],
+                },
+            );
         }
         if self.collide {
             let rb: RigidBody;
@@ -378,7 +477,7 @@ impl LoraSpawner {
             }
             let rb_handle = rigidbodies.insert(rb);
             self.rigidhandles.insert(uuid, rb_handle);
-    
+
             if let Some(hullshape) = self.hull.as_mut() {
                 colliders.insert_with_parent(hullshape.clone(), rb_handle, rigidbodies);
             }

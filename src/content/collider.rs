@@ -11,9 +11,7 @@ pub struct LoraColliderRef {
 
 impl UserData for LoraColliderRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| {
-            Ok(this.uuid)
-        });
+        methods.add_method("id", |_, this, ()| Ok(this.uuid));
     }
 }
 

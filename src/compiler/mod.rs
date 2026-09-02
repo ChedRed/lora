@@ -11,13 +11,12 @@ pub fn compile(filepath: String) {
     let mut name: String = "Lora App".to_string();
     let mut id: String = "red.ched.lora".to_string();
 
-    
     if let Some(real_premanifest) = premanifest {
         let real_manifest = from_str(real_premanifest.as_str()).unwrap();
-        
+
         let file_schema = from_str(include_str!("../schema/schema.json")).unwrap();
         let schema = jsonschema::Validator::new(&file_schema).unwrap();
-        
+
         match schema.validate(&real_manifest) {
             Ok(()) => {
                 let name_string = real_manifest["name"].to_string();
@@ -33,7 +32,7 @@ pub fn compile(filepath: String) {
             }
         }
     }
-    
+
     write_string(&mut bytes, &name);
     write_string(&mut bytes, &id);
     write_file(&mut bytes, &lua, &filepath);
@@ -45,7 +44,9 @@ pub fn compile(filepath: String) {
 
     match fs::write("output/app.lora", bytes) {
         Ok(()) => {}
-        Err(e) => { errorln(&e); }
+        Err(e) => {
+            errorln(&e);
+        }
     }
 }
 
@@ -53,16 +54,19 @@ fn iterate_dir(path: &String) -> (Vec<String>, Option<String>, String) {
     let mut real_paths: Vec<String> = Vec::new();
     let mut manifest: Option<String> = None;
     let mut lua: Option<String> = None;
-    
-    
+
     for entry in fs::read_dir(path).unwrap() {
         let enry = entry.unwrap().path();
         if enry.is_dir() {
             let mut new_iteration = iterate_subdir(&enry.to_str().unwrap().to_string(), path);
             real_paths.append(&mut new_iteration);
         } else if enry.is_file() {
-            let new_path = enry.strip_prefix(path)
-                .unwrap().to_str().unwrap().to_string();
+            let new_path = enry
+                .strip_prefix(path)
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string();
             if enry.file_name() == Some(OsStr::new("lora.json")) {
                 manifest = Some(fs::read_to_string(enry).unwrap());
             } else if enry.file_name() == Some(OsStr::new("main.lua")) {
@@ -71,23 +75,28 @@ fn iterate_dir(path: &String) -> (Vec<String>, Option<String>, String) {
                 real_paths.push(new_path);
             }
         }
-    };
+    }
     (real_paths, manifest, lua.unwrap())
 }
 
 fn iterate_subdir(path: &String, prefix: &String) -> Vec<String> {
     let mut real_paths: Vec<String> = Vec::new();
-    
+
     for entry in fs::read_dir(path).unwrap() {
         let enry = entry.unwrap().path();
         if enry.is_dir() {
             let mut new_iteration = iterate_subdir(&enry.to_str().unwrap().to_string(), prefix);
             real_paths.append(&mut new_iteration);
         } else if enry.is_file() {
-            real_paths.push(enry.strip_prefix(prefix)
-                .unwrap().to_str().unwrap().to_string());
+            real_paths.push(
+                enry.strip_prefix(prefix)
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string(),
+            );
         }
-    };
+    }
     real_paths
 }
 

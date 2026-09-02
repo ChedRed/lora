@@ -9,7 +9,11 @@ use image::EncodableLayout;
 use transform::Vector2;
 
 use crate::content::{
-    border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, sound::LoraSoundRef, spawner::{LoraObjectRef, LoraSpawnerRef},
+    border::LoraBorderRef,
+    collider::LoraColliderRef,
+    shape::LoraShapeRef,
+    sound::LoraSoundRef,
+    spawner::{LoraObjectRef, LoraSpawnerRef},
 };
 
 pub enum LoraToMainCommand {

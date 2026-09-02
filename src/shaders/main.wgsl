@@ -9,7 +9,7 @@ struct VertexInput {
     @location(0) position: vec2<f32>,
     @location(1) uv: vec2<f32>,
     @location(2) color: vec4<f32>,
-    
+
     @location(3) offset: vec2<f32>,
     @location(4) rotation: vec2<f32>,
 };
@@ -30,20 +30,20 @@ fn rotate(center: vec2<f32>, position: vec2<f32>, rotation: f32) -> vec2<f32> {
     var rotpos: vec2<f32> = vec2<f32>(cos(prerot), sin(prerot));
     var prepos: vec2<f32> = center + (rotpos*premag);
     return prepos;
-} 
+}
 
 @vertex
 fn vs_main(
     model: VertexInput,
 ) -> VertexOutput {
     var out: VertexOutput;
-    
+
     out.color = model.color;
     out.uv = model.uv * vec2<f32>(1, -1) + vec2<f32>(0, 1);
-    
+
     var prepos: vec2<f32> = rotate(vec2<f32>(0., 0.), model.position, model.rotation.x);
     prepos = rotate(view.position, prepos + model.offset, -view.rotation.x);
-    
+
     var pos: vec2<f32> = prepos - view.position;
     pos /= view.scale;
     pos = (pos * 2) - 1;

@@ -15,12 +15,12 @@ pub struct LoraSoundRef {
 
 impl UserData for LoraSoundRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| {
-            Ok(this.uuid)
-        });
+        methods.add_method("id", |_, this, ()| Ok(this.uuid));
         methods.add_method("play", |_, this, ()| {
-            _= this.tx.send(LoraToMainCommand::SoundPlay { uuid: this.uuid });
-            _= this.rx.recv();
+            _ = this
+                .tx
+                .send(LoraToMainCommand::SoundPlay { uuid: this.uuid });
+            _ = this.rx.recv();
             Ok(())
         });
     }
@@ -32,8 +32,6 @@ pub struct LoraSound {
 
 impl LoraSound {
     pub fn new(source: rodio::source::Buffered<Decoder<Cursor<Box<[u8]>>>>) -> Self {
-        Self {
-            source
-        }
+        Self { source }
     }
 }

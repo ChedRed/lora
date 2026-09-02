@@ -44,7 +44,7 @@ fn fs_main(@location(0) uv: vec2<f32>) -> @location(0) vec4<f32> {
     var coords = (uv) * primitives.scale;
 
     for (var i: u32 = 0u; i < primitives.count; i++) {
-        
+
         let primitive = primitives.data[i];
         if (primitive.label == 0) {
             if (primitive.xyzw.x < coords.x) {

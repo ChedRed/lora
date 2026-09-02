@@ -1,5 +1,5 @@
-use std::io::Error;
 use colored::Colorize;
+use std::io::Error;
 
 fn print(prefix: String, text: &'static str) {
     println!("{}  {}", prefix, text);
@@ -30,7 +30,10 @@ pub fn erorln(text: &'static str) {
 }
 
 pub fn errorln(err: &Error) {
-    esprint(format!("{}", " ".black().on_bright_red().bold()), err.to_string());
+    esprint(
+        format!("{}", " ".black().on_bright_red().bold()),
+        err.to_string(),
+    );
 }
 
 pub fn serorln(err: String) {

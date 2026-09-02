@@ -11,9 +11,7 @@ pub struct LoraShapeRef {
 
 impl UserData for LoraShapeRef {
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| {
-            Ok(this.uuid)
-        });
+        methods.add_method("id", |_, this, ()| Ok(this.uuid));
     }
 }
 
@@ -26,7 +24,12 @@ pub struct LoraShape {
 }
 
 impl LoraShape {
-    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, texture_bytes: Option<Vec<u8>>, texture_dimensions: Option<(u32, u32)>) -> Self {
+    pub fn new(
+        vertices: Vec<Vertex>,
+        indices: Vec<u32>,
+        texture_bytes: Option<Vec<u8>>,
+        texture_dimensions: Option<(u32, u32)>,
+    ) -> Self {
         Self {
             vertices,
             indices,
