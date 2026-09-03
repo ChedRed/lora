@@ -214,7 +214,8 @@ impl State {
         let lora_spawners: FastHashMap<u128, LoraSpawner> = FastHashMap::default();
         let uuid: u128 = 0;
 
-        let sink: MixerDeviceSink = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
+        let mut sink: MixerDeviceSink = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
+        sink.log_on_drop(false);
 
         let lora_sounds: FastHashMap<u128, LoraSound> = FastHashMap::default();
 

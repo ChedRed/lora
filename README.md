@@ -73,9 +73,9 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Object.disable() -> nil
 [=] lora.Object.toggle() -> nil
 
-lora.Border.enable() -> nil
-lora.Border.disable() -> nil
-lora.Border.toggle() -> nil
+[=] lora.Border.enable() -> nil
+[=] lora.Border.disable() -> nil
+[=] lora.Border.toggle() -> nil
 ```
 
 ```
@@ -106,7 +106,6 @@ lora.Border.toggle() -> nil
 ```
 TODO:
 - Verify traits (Clone, Copy, etc.)
-- Remove all 'while let Ok()'
 - Enforce at least one physics tick before rendering, unless lora.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
 - Add safeguard to prevent pushing static objects, or objects without colliders (or at least warning)
@@ -125,6 +124,8 @@ TODO:
 - Either return number, number or { number, number }
 
 - Make texture sampler owned by Main?
+
+- Abstract all render calls into one pipeline, somehow?
 
 - Compiler
 - Make things optional
@@ -162,7 +163,7 @@ Compiler will:
      |- MacOS
      |  \- lora (unix)
      |- Resources
-     |  \- game.id.lora 
+     |  \- game.id.lora
      |- Info.plist
   
 

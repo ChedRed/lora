@@ -39,14 +39,11 @@ impl UserData for LoraBorderRef {
                 .tx
                 .send(LoraToMainCommand::BorderPosition { uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
-                    MainToLoraCommand::ReturnBorderGetPosition { position } => {
-                        real_position = position;
-                        break;
-                    }
-                    _ => {}
+            match this.rx.recv().unwrap() {
+                MainToLoraCommand::ReturnBorderGetPosition { position } => {
+                    real_position = position;
                 }
+                _ => {}
             }
             Ok((real_position[0], real_position[1]))
         });
@@ -55,14 +52,11 @@ impl UserData for LoraBorderRef {
                 .tx
                 .send(LoraToMainCommand::BorderAngle { uuid: this.uuid });
             let mut real_angle: f32 = 0.;
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
-                    MainToLoraCommand::ReturnBorderGetAngle { angle } => {
-                        real_angle = angle;
-                        break;
-                    }
-                    _ => {}
+            match this.rx.recv().unwrap() {
+                MainToLoraCommand::ReturnBorderGetAngle { angle } => {
+                    real_angle = angle;
                 }
+                _ => {}
             }
             Ok(real_angle)
         });

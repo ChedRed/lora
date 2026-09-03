@@ -31,15 +31,12 @@ impl UserData for LoraSpawnerRef {
                 r,
             });
             let mut real_object: Option<LoraObjectRef> = None;
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
+                match this.rx.recv().unwrap() {
                     MainToLoraCommand::ReturnNewObject { object } => {
                         real_object = Some(object);
-                        break;
                     }
                     _ => {}
                 }
-            }
             Ok(real_object)
         });
     }
@@ -91,15 +88,12 @@ impl UserData for LoraObjectRef {
                 uuid: this.uuid,
             });
             let mut real_position: [f32; 2] = [0., 0.];
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
+                match this.rx.recv().unwrap() {
                     MainToLoraCommand::ReturnObjectGetPosition { position } => {
                         real_position = position;
-                        break;
                     }
                     _ => {}
                 }
-            }
             Ok(real_position)
         });
         methods.add_method("center", |_, this, ()| {
@@ -107,15 +101,12 @@ impl UserData for LoraObjectRef {
                 .tx
                 .send(LoraToMainCommand::ObjectCenter { uuid: this.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
+                match this.rx.recv().unwrap() {
                     MainToLoraCommand::ReturnObjectGetCenter { position } => {
                         real_position = position;
-                        break;
                     }
                     _ => {}
                 }
-            }
             Ok(real_position)
         });
         methods.add_method("world_center", |_, this, ()| {
@@ -124,15 +115,12 @@ impl UserData for LoraObjectRef {
                 uuid: this.uuid,
             });
             let mut real_position: [f32; 2] = [0., 0.];
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
+                match this.rx.recv().unwrap() {
                     MainToLoraCommand::ReturnObjectGetWorldCenter { position } => {
                         real_position = position;
-                        break;
                     }
                     _ => {}
                 }
-            }
             Ok(real_position)
         });
         methods.add_method("motion", |_, this, ()| {
@@ -141,15 +129,12 @@ impl UserData for LoraObjectRef {
                 uuid: this.uuid,
             });
             let mut real_motion: [f32; 2] = [0., 0.];
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
+                match this.rx.recv().unwrap() {
                     MainToLoraCommand::ReturnObjectGetMotion { motion } => {
                         real_motion = motion;
-                        break;
                     }
                     _ => {}
                 }
-            }
             Ok(real_motion)
         });
         methods.add_method("angle", |_, this, ()| {
@@ -158,15 +143,12 @@ impl UserData for LoraObjectRef {
                 uuid: this.uuid,
             });
             let mut real_angle: f32 = 0.;
-            while let Ok(cmd) = this.rx.recv() {
-                match cmd {
+                match this.rx.recv().unwrap() {
                     MainToLoraCommand::ReturnObjectGetAngle { angle } => {
                         real_angle = angle;
-                        break;
                     }
                     _ => {}
                 }
-            }
             Ok(real_angle)
         });
         methods.add_method("impulse", |_, this, (x, y)| {
