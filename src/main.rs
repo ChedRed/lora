@@ -10,7 +10,6 @@ use std::{io::Cursor, sync::mpsc};
 use rapier2d::prelude::*;
 use std::{process::exit, sync::Arc, thread::JoinHandle};
 use wgpu::{naga::FastHashMap, util::DeviceExt};
-use winit::dpi::PhysicalSize;
 use winit::event::{
     DeviceEvent, DeviceId, MouseButton,
     MouseScrollDelta::{LineDelta, PixelDelta},
@@ -20,6 +19,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::SmolStr;
 use winit::window::{Window, WindowId};
 use winit::{application::ApplicationHandler, event::MouseScrollDelta};
+use winit::{dpi::PhysicalSize, platform::modifier_supplement::KeyEventExtModifierSupplement};
 
 pub mod content;
 use content::{
@@ -1441,8 +1441,9 @@ impl ApplicationHandler for App {
             }
             WindowEvent::KeyboardInput { event, .. } => {
                 let newtext: String = event
-                    .text
-                    .unwrap_or_else(|| SmolStr::new("NONE"))
+                    .key_without_modifiers()
+                    .to_text()
+                    .unwrap_or_else(|| "NONE")
                     .to_string();
                 superstate.keyboard_inputs(newtext, event.state.is_pressed());
             }

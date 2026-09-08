@@ -62,6 +62,7 @@ function lora.keypressed(key)
 end
 
 function lora.keyreleased(key)
+    print(key)
     if key == "w" then
         PlayerJumped = false
     end
@@ -87,6 +88,7 @@ function lora.update(delta)
     end
     if lora.get.key.state("d") then
         PlayerObject:add_torque(-1)
+
     end
 
     if lora.get.key.state("j") then
