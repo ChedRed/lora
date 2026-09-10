@@ -16,7 +16,6 @@ use winit::event::{
     WindowEvent,
 };
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::SmolStr;
 use winit::window::{Window, WindowId};
 use winit::{application::ApplicationHandler, event::MouseScrollDelta};
 use winit::{dpi::PhysicalSize, platform::modifier_supplement::KeyEventExtModifierSupplement};

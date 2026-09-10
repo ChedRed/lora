@@ -229,6 +229,9 @@ Lora = {
             --- @param y number
             --- @return nil
             position = function(x, y) end,
+            --- @param z number
+            --- @return nil
+            zoom = function(z) end,
         }
     },
 

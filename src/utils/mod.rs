@@ -221,6 +221,7 @@ pub enum MainToLoraCommand {
 
 pub enum MainToLoraCall {
     Load,
+    Resized { x: f32, y: f32 },
     Keypressed { code: String },
     Keyreleased { code: String },
     Mousepressed { x: f32, y: f32, button: u32 },
@@ -235,6 +236,7 @@ pub enum MainToLoraCall {
 
 pub enum LoraToMainCall {
     Load,
+    Resized,
     Keypressed,
     Keyreleased,
     Mousepressed,

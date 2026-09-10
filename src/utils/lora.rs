@@ -20,6 +20,7 @@ pub struct Lora {
     main_back: Sender<LoraToMainCall>,
 
     lora_load: Option<mlua::Function>,
+    lora_resized: Option<mlua::Function>,
     lora_keypressed: Option<mlua::Function>,
     lora_keyreleased: Option<mlua::Function>,
     lora_mousepressed: Option<mlua::Function>,
@@ -438,6 +439,7 @@ impl Lora {
         let lhk: mlua::Table = _lua.globals().get("lora").unwrap();
 
         let mut lora_load: Option<mlua::Function> = None;
+        let mut lora_resized: Option<mlua::Function> = None;
         let mut lora_keypressed: Option<mlua::Function> = None;
         let mut lora_keyreleased: Option<mlua::Function> = None;
         let mut lora_mousepressed: Option<mlua::Function> = None;
@@ -449,11 +451,20 @@ impl Lora {
         let mut lora_render: Option<mlua::Function> = None;
         let mut lora_exit: Option<mlua::Function> = None;
 
-        match lhk.get("load") {
+        match lhk.get::<Function>("load") {
             Ok(func) => {
-                lora_load = func;
+                lora_load = Some(func);
                 if verbose {
                     vbosln("Loaded function 'Load'");
+                }
+            }
+            _ => {}
+        }
+        match lhk.get::<Function>("resized") {
+            Ok(func) => {
+                lora_resized = Some(func);
+                if verbose {
+                    vbosln("Loaded function 'Resized'");
                 }
             }
             _ => {}
@@ -516,7 +527,7 @@ impl Lora {
             Ok(func) => {
                 lora_collision = Some(func);
                 if verbose {
-                    vbosln("Loaded function 'collision'");
+                    vbosln("Loaded function 'Collision'");
                 }
             }
             _ => {}
@@ -555,6 +566,7 @@ impl Lora {
             main_back,
 
             lora_load,
+            lora_resized,
             lora_keypressed,
             lora_keyreleased,
             lora_mousepressed,
@@ -579,6 +591,15 @@ impl Lora {
                         _ => {}
                     }
                     _ = self.main_back.send(LoraToMainCall::Load);
+                }
+                MainToLoraCall::Resized { x, y } => {
+                    match &self.lora_resized {
+                        Some(func) => {
+                            _ = func.call::<()>((x, y));
+                        }
+                        _ => {}
+                    }
+                    _ = self.main_back.send(LoraToMainCall::Resized);
                 }
                 MainToLoraCall::Keypressed { code } => {
                     match &self.lora_keypressed {

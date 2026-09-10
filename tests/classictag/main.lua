@@ -17,13 +17,13 @@ function lora.load()
 
     MapBorder = lora.new.border({
         { 0,    0 },
-        { 2560, 0 },
+        { 3024, 0 },
     })
 
     MapUpperBorder = lora.new.border({
-        { 2560, 0 },
-        { 2560, 1600 },
-        { 0,    1600 },
+        { 3024, 0 },
+        { 3024, 1964 },
+        { 0,    1964 },
         { 0,    0 },
     })
 

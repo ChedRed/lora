@@ -14,11 +14,13 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.set.physics.gravity(x: number, y: number) -> nil
 [=] lora.set.physics.hertz(hz: number) -> nil
 [=] lora.set.camera.position(x: number, y: number) -> nil
+[ ] lora.set.camera.zoom(x: number, y: number) -> nil
 
 [=] lora.get.window.size() -> table[w: int, h: int]
 [=] lora.get.key.state(key: string) -> bool
 [=] lora.get.mouse.position() -> table[x: number, y: number]
 [=] lora.get.camera.position() -> table[x: number, y: number]
+[ ] lora.get.camera.zoom() -> number
 
 [=] lora.new.border(points: [number[]]) -> lora.Border
 [=] lora.new.image(image: string, scale: number) -> lora.Shape
@@ -36,6 +38,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 
 [=] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
+lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 [ ] lora.Sound.stop() -> nil
 
 [=] lora.Border.id() -> number
@@ -87,7 +90,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.mousemoved(x: number, y: number) -> nil
 [=] lora.mousescrolled(x: number, y: number) -> nil
 [=] lora.collision(one: number, two: number) -> nil
-[ ] lora.resized(x: number, y: number) -> nil
+[=] lora.resized(x: number, y: number) -> nil
 [=] lora.update() -> nil
 [=] lora.render() -> nil
 [=] lora.exit() -> nil
@@ -135,6 +138,7 @@ TODO:
 - Add Sprite to be connected to Shape, make the Image creator just load the image
   - load image
   - Sprite uses image (slice)
+  - Make image immediately renderable
 
 - Organize TODO section
 - Make filer search platform-specific locations for .lora when filepath is not provided

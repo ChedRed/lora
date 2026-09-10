@@ -5,7 +5,7 @@ PlayerIt = true
 
 function lora.load()
     lora.set.physics.gravity(0, -10)
-    lora.set.physics.hertz(200)
+    -- lora.set.physics.hertz(200)
 
     PlayerShape = lora.new.mesh({
         { 0.,   0.,   0., 0., 1., 0., 0., 1. },
@@ -18,7 +18,6 @@ function lora.load()
     PlayerSpawner = lora.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(200, 100, 0)
 
-    -- PlayertwoShape = lora.new.image("resources/image.png", 1)
     PlayertwoShape = lora.new.mesh({
         { 0.,   0.,   0., 0., 0., 1., 0., 1. },
         { -6.4, 25.6, 0., 0., 0., 1., 0., 1. },
@@ -32,11 +31,15 @@ function lora.load()
 
     MapBorder = lora.new.border({
         { 0,    0 },
-        { 2560, 0 },
-        { 2560, 1600 },
-        { 0,    1600 },
+        { 3024, 0 },
+        { 3024, 1964 },
+        { 0,    1964 },
         { 0,    0 },
     })
+end
+
+function lora.resized(x, y)
+    lora.set.camera.position(x, y)
 end
 
 function lora.keypressed(key)
@@ -62,7 +65,6 @@ function lora.keypressed(key)
 end
 
 function lora.keyreleased(key)
-    print(key)
     if key == "w" then
         PlayerJumped = false
     end
@@ -84,18 +86,18 @@ end
 
 function lora.update(delta)
     if lora.get.key.state("a") then
-        PlayerObject:add_torque(1)
+        PlayerObject:add_torque(2)
     end
     if lora.get.key.state("d") then
-        PlayerObject:add_torque(-1)
+        PlayerObject:add_torque(-2)
 
     end
 
     if lora.get.key.state("j") then
-        PlayertwoObject:add_torque(1)
+        PlayertwoObject:add_torque(2)
     end
     if lora.get.key.state("l") then
-        PlayertwoObject:add_torque(-1)
+        PlayertwoObject:add_torque(-2)
     end
 end
 
