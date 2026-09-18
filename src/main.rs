@@ -8,7 +8,7 @@ use rodio::{Decoder, MixerDeviceSink, Source};
 use std::{io::Cursor, sync::mpsc};
 
 use rapier2d::prelude::*;
-use std::{process::exit, sync::Arc, thread::JoinHandle};
+use std::{sync::Arc, thread::JoinHandle};
 use wgpu::{naga::FastHashMap, util::DeviceExt};
 use winit::event::{
     DeviceEvent, DeviceId, MouseButton,
@@ -855,7 +855,11 @@ impl State {
                         y: self.gpu_view.position[1] / RESOLUTION,
                     });
             }
-            LoraToMainCommand::NewBorder { points, indices } => {
+            LoraToMainCommand::NewBorder {
+                points,
+                indices,
+                table,
+            } => {
                 let mut vertices: Vec<Vec2> = Vec::new();
                 for point in points {
                     vertices.push(Vec2 {
@@ -879,6 +883,8 @@ impl State {
                         uuid: self.uuid,
                         tx: self.lora_cmd_rev.clone(),
                         rx: self.lora_rtrn_rev.clone(),
+                        pos: table.clone(),
+                        vel: table.clone(),
                     },
                 });
                 self.uuid += 1;
@@ -1474,15 +1480,14 @@ fn main() {
     let argus: Args = Args::parse();
     if argus.compile.is_some() {
         compile(argus.compile.unwrap());
-        exit(0);
-    }
+    } else {
+        let events = EventLoop::new().unwrap();
+        events.set_control_flow(ControlFlow::Poll);
 
-    let events = EventLoop::new().unwrap();
-    events.set_control_flow(ControlFlow::Poll);
-
-    let mut app = App::default();
-    match events.run_app(&mut app) {
-        Ok(()) => infoln("Exited successfully."),
-        Err(error) => serorln(format!("Exited with an error:\n {error:?}")),
+        let mut app = App::default();
+        match events.run_app(&mut app) {
+            Ok(()) => infoln("Exited successfully."),
+            Err(error) => serorln(format!("Exited with an error:\n {error:?}")),
+        }
     }
 }

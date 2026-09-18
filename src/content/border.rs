@@ -1,5 +1,5 @@
 use crossbeam::channel::{Receiver, Sender};
-use mlua::{UserData, UserDataMethods};
+use mlua::{Table, UserData, UserDataMethods};
 use rapier2d::{
     dynamics::{RigidBodyBuilder, RigidBodyHandle, RigidBodySet},
     geometry::{ColliderBuilder, ColliderSet},
@@ -13,53 +13,71 @@ pub struct LoraBorderRef {
     pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
     pub rx: Receiver<MainToLoraCommand>,
+    pub pos: Table,
+    pub vel: Table,
 }
 
 impl UserData for LoraBorderRef {
-    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| Ok(this.uuid));
-        methods.add_method("set_position", |_, this, (x, y)| {
-            _ = this.tx.send(LoraToMainCommand::BorderSetPosition {
-                uuid: this.uuid,
-                x,
-                y,
-            });
-            _ = this.rx.recv();
-            Ok(())
-        });
-        methods.add_method("set_angle", |_, this, r| {
-            _ = this
+    fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("id", |_, this| Ok(this.uuid));
+
+        fields.add_field_function_get("position", |_, this| {
+            let that = this.borrow::<LoraBorderRef>().unwrap();
+            _ = that
                 .tx
-                .send(LoraToMainCommand::BorderSetAngle { uuid: this.uuid, r });
-            _ = this.rx.recv();
-            Ok(())
-        });
-        methods.add_method("position", |_, this, ()| {
-            _ = this
-                .tx
-                .send(LoraToMainCommand::BorderPosition { uuid: this.uuid });
+                .send(LoraToMainCommand::BorderPosition { uuid: that.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
-            match this.rx.recv().unwrap() {
+
+            match that.rx.recv().unwrap() {
                 MainToLoraCommand::ReturnBorderGetPosition { position } => {
                     real_position = position;
                 }
                 _ => {}
             }
-            Ok((real_position[0], real_position[1]))
+
+            that.pos.raw_set("x", real_position[0]);
+            that.pos.raw_set("y", real_position[1]);
+            Ok(that.pos.clone())
         });
-        methods.add_method("angle", |_, this, ()| {
-            _ = this
+        fields.add_field_function_set("position", |_, this, nevw: Table| {
+            let that = this.borrow::<LoraBorderRef>().unwrap();
+            _ = that.tx.send(LoraToMainCommand::BorderSetPosition {
+                uuid: that.uuid,
+                x: nevw.raw_get("x").unwrap(),
+                y: nevw.raw_get("y").unwrap(),
+            });
+            _ = that.rx.recv();
+            Ok(())
+        });
+
+        fields.add_field_function_get("angle", |_, this| {
+            let that = this.borrow::<LoraBorderRef>().unwrap();
+            _ = that
                 .tx
-                .send(LoraToMainCommand::BorderAngle { uuid: this.uuid });
+                .send(LoraToMainCommand::BorderAngle { uuid: that.uuid });
             let mut real_angle: f32 = 0.;
-            match this.rx.recv().unwrap() {
+
+            match that.rx.recv().unwrap() {
                 MainToLoraCommand::ReturnBorderGetAngle { angle } => {
                     real_angle = angle;
                 }
                 _ => {}
             }
+
             Ok(real_angle)
         });
+        fields.add_field_function_set("angle", |_, this, nevw: f32| {
+            let that = this.borrow::<LoraBorderRef>().unwrap();
+            _ = that.tx.send(LoraToMainCommand::BorderSetAngle {
+                uuid: that.uuid,
+                r: nevw,
+            });
+            _ = that.rx.recv();
+            Ok(())
+        });
+    }
+
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method("enable", |_, this, ()| {
             _ = this
                 .tx

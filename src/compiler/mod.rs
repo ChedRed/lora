@@ -1,8 +1,11 @@
-use std::{ffi::OsStr, fs, path::Path, process::exit};
+use std::{ffi::OsStr, fs, path::Path};
 
 use serde_json::from_str;
 
-use crate::utils::print::{errorln, serorln};
+use crate::utils::{
+    fatal,
+    print::{errorln, serorln},
+};
 
 pub fn compile(filepath: String) {
     let (pathnames, premanifest, lua) = iterate_dir(&filepath);
@@ -28,7 +31,7 @@ pub fn compile(filepath: String) {
             }
             Err(e) => {
                 serorln(e.to_string());
-                exit(5);
+                fatal(5);
             }
         }
     }

@@ -1,5 +1,3 @@
-use std::process::exit;
-
 use crossbeam::channel::{Receiver, Sender};
 use mlua::{Function, UserDataRef};
 
@@ -9,7 +7,7 @@ use crate::{
         spawner::LoraSpawnerRef,
     },
     utils::{
-        LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand,
+        LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, fatal,
         print::{serorln, vbosln},
     },
 };
@@ -198,8 +196,14 @@ impl Lora {
             _lua.create_function({
                 let tx = main_cmd.clone();
                 let rx = main_rtrn.clone();
+
+                let pretable = _lua.create_table().unwrap();
                 move |_, (points, indices)| {
-                    _ = tx.send(LoraToMainCommand::NewBorder { points, indices });
+                    _ = tx.send(LoraToMainCommand::NewBorder {
+                        points,
+                        indices,
+                        table: pretable.clone(),
+                    });
                     let mut new_border: Option<LoraBorderRef> = None;
                     match rx.recv().unwrap() {
                         MainToLoraCommand::ReturnNewBorder { border } => {
@@ -433,7 +437,7 @@ impl Lora {
             }
             Err(e) => {
                 serorln(e.to_string());
-                exit(3);
+                fatal(3);
             }
         }
         let lhk: mlua::Table = _lua.globals().get("lora").unwrap();

@@ -6,6 +6,7 @@ pub mod transform;
 use std::io::Cursor;
 
 use image::EncodableLayout;
+use mlua::Table;
 use transform::Vector2;
 
 use crate::content::{
@@ -50,6 +51,7 @@ pub enum LoraToMainCommand {
     NewBorder {
         points: Vec<[f32; 2]>,
         indices: Option<Vec<[u32; 2]>>,
+        table: Table,
     },
     NewShape {
         kind: String,
@@ -414,4 +416,14 @@ pub fn get_image(data: &Vec<u8>) -> (Vec<u8>, (u32, u32)) {
     }
 
     (real_bytes, dimensions)
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn fatal(code: i32) -> ! {
+    panic!("lora encountered a fatal error: {}", code);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn fatal(code: i32) -> ! {
+    std::process::exit(code);
 }

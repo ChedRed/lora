@@ -2,13 +2,15 @@ use std::{
     ffi::OsStr,
     fs,
     path::{Path, PathBuf},
-    process::exit,
 };
 
 use serde_json::{Value, from_str};
 use wgpu::naga::FastHashMap;
 
-use crate::utils::print::{erorln, serorln};
+use crate::utils::{
+    fatal,
+    print::{erorln, serorln},
+};
 
 pub struct Filer {
     name: String,
@@ -35,7 +37,7 @@ impl Filer {
                 (name, id, lora, lora_files) = check_file(real_path);
             } else {
                 erorln("Path provided is not a file or directory!");
-                exit(4);
+                fatal(4);
             }
         } else {
             (name, id, lora, lora_files) = check_dir(Path::new("."));
@@ -89,7 +91,7 @@ fn check_dir(dir: &Path) -> (String, String, String, FastHashMap<String, Vec<u8>
         files = parse_result.3;
     } else {
         erorln("Folder provided does not contain main.lua or a .lora file!");
-        exit(4);
+        fatal(4);
     }
 
     (name, id, code, files)
@@ -122,7 +124,7 @@ fn check_file(file: &Path) -> (String, String, String, FastHashMap<String, Vec<u
         files = parse_result.3;
     } else {
         erorln("File provided is not main.lua or a .lora file!");
-        exit(4);
+        fatal(4);
     }
 
     (name, id, code, files)
@@ -193,7 +195,7 @@ fn parse_first_folder(prefix: &String) -> (String, String, String, FastHashMap<S
                         }
                         Err(e) => {
                             serorln(e.to_string());
-                            exit(5);
+                            fatal(5);
                         }
                     }
                 } else {
@@ -249,7 +251,7 @@ fn parse_lora_folder(path: &String) -> (String, String, String, FastHashMap<Stri
         }
     }
     erorln(".lora file not found!");
-    exit(404);
+    fatal(404);
 }
 
 fn parse_lora(path: String) -> (String, String, String, FastHashMap<String, Vec<u8>>) {

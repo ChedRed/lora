@@ -5,26 +5,28 @@ PlayerIt = true
 
 function lora.load()
     lora.set.physics.gravity(0, -10)
-    -- lora.set.physics.hertz(200)
+    lora.set.physics.hertz(200)
 
-    PlayerShape = lora.new.mesh({
-        { 0.,   0.,   0., 0., 1., 0., 0., 1. },
-        { -6.4, 25.6, 0., 0., 1., 0., 0., 1. },
-        { 32.,  0.,   0., 0., 1., 0., 0., 1. },
-        { 16,   40,   0., 0., 1., 0., 0., 1. },
-        { 38.4, 25.6, 0., 0., 1., 0., 0., 1. },
-    }, { 0, 1, 2, 3, 4 })
+    -- PlayerShape = lora.new.mesh({
+    --     { 0.,   0.,   0., 0., 1., 0., 0., 1. },
+    --     { -6.4, 25.6, 0., 0., 1., 0., 0., 1. },
+    --     { 32.,  0.,   0., 0., 1., 0., 0., 1. },
+    --     { 16,   40,   0., 0., 1., 0., 0., 1. },
+    --     { 38.4, 25.6, 0., 0., 1., 0., 0., 1. },
+    -- }, { 0, 1, 2, 3, 4 })
+    PlayerShape = lora.new.shape("rectangle", 48, 48, {1, 0, 0, 0})
     PlayerCollider = lora.new.collider(PlayerShape, "dynamic")
     PlayerSpawner = lora.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(200, 100, 0)
 
-    PlayertwoShape = lora.new.mesh({
-        { 0.,   0.,   0., 0., 0., 1., 0., 1. },
-        { -6.4, 25.6, 0., 0., 0., 1., 0., 1. },
-        { 32.,  0.,   0., 0., 0., 1., 0., 1. },
-        { 16,   40,   0., 0., 0., 1., 0., 1. },
-        { 38.4, 25.6, 0., 0., 0., 1., 0., 1. },
-    }, { 0, 1, 2, 3, 4 })
+    -- PlayertwoShape = lora.new.mesh({
+    --     { 0.,   0.,   0., 0., 0., 1., 0., 1. },
+    --     { -6.4, 25.6, 0., 0., 0., 1., 0., 1. },
+    --     { 32.,  0.,   0., 0., 0., 1., 0., 1. },
+    --     { 16,   40,   0., 0., 0., 1., 0., 1. },
+    --     { 38.4, 25.6, 0., 0., 0., 1., 0., 1. },
+    -- }, { 0, 1, 2, 3, 4 })
+    PlayertwoShape = lora.new.shape("rectangle", 48, 48, {0, 1, 0, 0})
     PlayertwoCollider = lora.new.collider(PlayertwoShape, "dynamic")
     PlayertwoSpawner = lora.new.spawner(PlayertwoShape, PlayertwoCollider)
     PlayertwoObject = PlayertwoSpawner:spawn(2360, 100, 0)
@@ -109,4 +111,9 @@ function lora.render()
         drawpos = PlayertwoObject:world_center()
     end
     lora.draw.circle(drawpos[1], drawpos[2] + 50, 10, { 1, 1, 1, 1 })
+
+    lora.draw.line(0, 0, 3024, 0, 1, {0, 0, 1, 1})
+    lora.draw.line(3024, 0, 3024, 1964, 1, {0, 0, 1, 1})
+    lora.draw.line(3024, 1964, 0, 1964, 1, {0, 0, 1, 1})
+    lora.draw.line(0, 1964, 0, 0, 1, {0, 0, 1, 1})
 end

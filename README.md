@@ -41,11 +41,9 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 [ ] lora.Sound.stop() -> nil
 
-[=] lora.Border.id() -> number
-[=] lora.Border.set_position(x: number, y: number) -> nil
-[=] lora.Border.set_angle(r: number) -> nil
-[=] lora.Border.position() -> table[x: number, y: number]
-[=] lora.Border.angle() -> number
+[-] lora.Border.id -> number
+[-] lora.Border.position <-> table[x: number, y: number]
+[-] lora.Border.angle <-> number
 [=] lora.Border.enable() -> nil
 [=] lora.Border.disable() -> nil
 [=] lora.Border.toggle() -> nil
@@ -75,10 +73,6 @@ lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 [=] lora.Object.enable() -> nil
 [=] lora.Object.disable() -> nil
 [=] lora.Object.toggle() -> nil
-
-[=] lora.Border.enable() -> nil
-[=] lora.Border.disable() -> nil
-[=] lora.Border.toggle() -> nil
 ```
 
 ```
@@ -108,6 +102,7 @@ lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 
 ```
 TODO:
+- Move lora related code into engine.rs, out of main.rs
 - Verify traits (Clone, Copy, etc.)
 - Enforce at least one physics tick before rendering, unless lora.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
@@ -146,7 +141,10 @@ TODO:
 - Make sure to update and render objects if objects EXIST
 - Texture data with Mesh? Or stuff with Sprite
 - Make interpolation of Primitives interpolate Alpha, not entire color
-- Make lora functions error/fail on incorrect thingaling
+- Make lora functions error/fail on incorrect inputs
+
+- Figure out native apps
+  - Make lora use env variable LORA_FILEPATH?
 
 - FUTURE:
   - Advanced functions/capabilities via wgpu::ExperimentalFeatures::enabled()
@@ -155,6 +153,11 @@ TODO:
     - GETs are fields
     - SETs are functions
     - remove world_center and make position return it
+  - wasm32-unknown-unknown support
+    - Only runs .lora files
+
+- BUGS:
+  - accessing stray/nonexistent shapes causes physics with borders to stop
 ```
 
 ```

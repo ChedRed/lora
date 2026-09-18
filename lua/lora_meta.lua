@@ -20,25 +20,9 @@ Lora = {
 
     --- @class Border
     Border = {
-        --- @param self Border
-        --- @return number
-        id = function(self) return self:id() end,
-        --- @param self Border
-        --- @param x number
-        --- @param y number
-        --- @return nil
-        set_position = function(self, x, y) end,
-        --- @param self Border
-        --- @param r number
-        --- @return nil
-        set_angle = function(self, r) end,
-        --- @param self Border
-        --- @return number
-        --- @return number
-        position = function(self) return self:position() end,
-        --- @param self Border
-        --- @return number
-        angle = function(self) return self:angle() end,
+        id = 0,
+        position = Table,
+        angle = 0,
         --- @param self Border
         --- @return nil
         enable = function(self) end,
