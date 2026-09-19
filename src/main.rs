@@ -884,7 +884,6 @@ impl State {
                         tx: self.lora_cmd_rev.clone(),
                         rx: self.lora_rtrn_rev.clone(),
                         pos: table.clone(),
-                        vel: table.clone(),
                     },
                 });
                 self.uuid += 1;

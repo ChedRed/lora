@@ -27,6 +27,8 @@ function lora.load()
         { 0,    0 },
     })
 
+    MapBorder.position.x = {x = 1000, y = 1}
+
     JumpSound = lora.new.sound("resources/jump.wav")
 end
 

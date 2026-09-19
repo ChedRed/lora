@@ -14,7 +14,6 @@ pub struct LoraBorderRef {
     pub tx: Sender<LoraToMainCommand>,
     pub rx: Receiver<MainToLoraCommand>,
     pub pos: Table,
-    pub vel: Table,
 }
 
 impl UserData for LoraBorderRef {
@@ -35,12 +34,17 @@ impl UserData for LoraBorderRef {
                 _ => {}
             }
 
-            that.pos.raw_set("x", real_position[0]);
-            that.pos.raw_set("y", real_position[1]);
+            _ = that.pos.raw_set("x", real_position[0]);
+            _ = that.pos.raw_set("y", real_position[1]);
             Ok(that.pos.clone())
         });
         fields.add_field_function_set("position", |_, this, nevw: Table| {
             let that = this.borrow::<LoraBorderRef>().unwrap();
+            println!(
+                "{}, {}",
+                nevw.raw_get::<f32>("x").unwrap(),
+                nevw.raw_get::<f32>("y").unwrap()
+            );
             _ = that.tx.send(LoraToMainCommand::BorderSetPosition {
                 uuid: that.uuid,
                 x: nevw.raw_get("x").unwrap(),
