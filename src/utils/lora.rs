@@ -197,12 +197,10 @@ impl Lora {
                 let tx = main_cmd.clone();
                 let rx = main_rtrn.clone();
 
-                let pretable = _lua.create_table().unwrap();
                 move |_, (points, indices)| {
                     _ = tx.send(LoraToMainCommand::NewBorder {
                         points,
                         indices,
-                        table: pretable.clone(),
                     });
                     let mut new_border: Option<LoraBorderRef> = None;
                     match rx.recv().unwrap() {

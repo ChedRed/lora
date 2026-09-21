@@ -6,34 +6,34 @@ function lora.load()
     lora.set.physics.hertz(200)
 
     PlayerShape = lora.new.image("resources/larry.png", 0.5)
-    PlayerCollider = lora.new.collider(PlayerShape, "diaxial")
+    PlayerCollider = lora.new.collider(PlayerShape, "dynamic")
     PlayerSpawner = lora.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(200, 100, 0)
 
     PlayertwoShape = lora.new.image("resources/snowmog.png", 0.5)
-    PlayertwoCollider = lora.new.collider(PlayertwoShape, "diaxial")
+    PlayertwoCollider = lora.new.collider(PlayertwoShape, "dynamic")
     PlayertwoSpawner = lora.new.spawner(PlayertwoShape, PlayertwoCollider)
     PlayertwoObject = PlayertwoSpawner:spawn(2360, 100, 0)
 
     MapBorder = lora.new.border({
         { 0,    0 },
-        { 3024, 0 },
+        { 2560, 0 },
     })
 
     MapUpperBorder = lora.new.border({
-        { 3024, 0 },
-        { 3024, 1964 },
-        { 0,    1964 },
+        { 2560, 0 },
+        { 2560, 1440 },
+        { 0,    1440 },
         { 0,    0 },
     })
 
-    MapBorder.position.x = {x = 1000, y = 1}
+    -- MapBorder.position.x = {x = 1000, y = 1}
 
     JumpSound = lora.new.sound("resources/jump.wav")
 end
 
 function lora.collision(one, two)
-    if one == MapBorder:id() or two == MapBorder:id() then
+    if one == MapBorder.id or two == MapBorder.id then
         if one == PlayerObject:id() or two == PlayerObject:id() then
             PlayerJumped = false
         else

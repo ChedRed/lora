@@ -858,7 +858,6 @@ impl State {
             LoraToMainCommand::NewBorder {
                 points,
                 indices,
-                table,
             } => {
                 let mut vertices: Vec<Vec2> = Vec::new();
                 for point in points {
@@ -883,7 +882,6 @@ impl State {
                         uuid: self.uuid,
                         tx: self.lora_cmd_rev.clone(),
                         rx: self.lora_rtrn_rev.clone(),
-                        pos: table.clone(),
                     },
                 });
                 self.uuid += 1;

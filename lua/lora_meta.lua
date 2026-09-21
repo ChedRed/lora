@@ -6,22 +6,18 @@
 Lora = {
     --- @class Shape
     Shape = {
-        --- @param self Shape
-        --- @return number
-        id = function(self) return self:id() end,
+        id = 0,
     },
 
     --- @class Collider
     Collider = {
-        --- @param self Collider
-        --- @return number
-        id = function(self) return self:id() end,
+        id = 0,
     },
 
     --- @class Border
     Border = {
         id = 0,
-        position = Table,
+        position = { x = 0, y = 0 },
         angle = 0,
         --- @param self Border
         --- @return nil
@@ -36,9 +32,7 @@ Lora = {
 
     --- @class Spawner
     Spawner = {
-        --- @param self Spawner
-        --- @return number
-        id = function(self) return self:id() end,
+        id = 0,
         --- @param self Spawner
         --- @param x number
         --- @param y number
@@ -49,42 +43,12 @@ Lora = {
 
     --- @class Object
     Object = {
-        --- @param self Object
-        --- @return number
-        id = function(self) return self:id() end,
-        --- @param self Object
-        --- @param x number
-        --- @param y number
-        --- @return nil
-        set_position = function(self, x, y) end,
-        --- @param self Object
-        --- @param x number
-        --- @param y number
-        --- @return nil
-        set_motion = function(self, x, y) end,
-        --- @param self Object
-        --- @param r number
-        --- @return nil
-        set_angle = function(self, r) end,
-        --- @param self Object
-        --- @return number
-        --- @return number
-        position = function(self) return self:position() end,
-        --- @param self Object
-        --- @return number
-        --- @return number
-        center = function(self) return self:center() end,
-        --- @param self Object
-        --- @return number
-        --- @return number
-        world_center = function(self) return self:world_center() end,
-        --- @param self Object
-        --- @return number
-        --- @return number
-        motion = function(self) return self:motion() end,
-        --- @param self Object
-        --- @return number
-        angle = function(self) return self:angle() end,
+        id = 0,
+        world = { x = 0, y = 0 },
+        position = { x = 0, y = 0 },
+        motion = { x = 0, y = 0 },
+        angle = 0,
+        center = { x = 0, y = 0 },
         --- @param self Object
         --- @param x number
         --- @param y number
@@ -94,18 +58,18 @@ Lora = {
         --- @param x number
         --- @param y number
         --- @return nil
-        add_force = function(self, x, y) end,
+        force = function(self, x, y) end,
         --- @param self Object
         --- @param x1 number
         --- @param y1 number
         --- @param x2 number
         --- @param y2 number
         --- @return nil
-        add_world_force = function(self, x1, y1, x2, y2) end,
+        world_force = function(self, x1, y1, x2, y2) end,
         --- @param self Object
         --- @param r number
         --- @return nil
-        add_torque = function(self, r) end,
+        torque = function(self, r) end,
         --- @param self Object
         --- @return nil
         show = function(self) end,
@@ -135,6 +99,11 @@ Lora = {
         --- @param volume number
         --- @param pitch number
         loop = function(self, count, volume, pitch) end,
+        --- @param self Sound
+        --- @param time Sound
+        --- @param volume Sound
+        --- @param pitch Sound
+        fade = function(self, time, volume, pitch) end,
         --- @param self Sound
         --- @return nil
         stop = function(self) end,

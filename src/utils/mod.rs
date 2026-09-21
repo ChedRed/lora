@@ -6,7 +6,6 @@ pub mod transform;
 use std::io::Cursor;
 
 use image::EncodableLayout;
-use mlua::Table;
 use transform::Vector2;
 
 use crate::content::{
@@ -51,7 +50,6 @@ pub enum LoraToMainCommand {
     NewBorder {
         points: Vec<[f32; 2]>,
         indices: Option<Vec<[u32; 2]>>,
-        table: Table,
     },
     NewShape {
         kind: String,

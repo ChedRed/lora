@@ -13,14 +13,13 @@ pub struct LoraBorderRef {
     pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
     pub rx: Receiver<MainToLoraCommand>,
-    pub pos: Table,
 }
 
 impl UserData for LoraBorderRef {
     fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("id", |_, this| Ok(this.uuid));
 
-        fields.add_field_function_get("position", |_, this| {
+        fields.add_field_function_get("position", |lua, this| {
             let that = this.borrow::<LoraBorderRef>().unwrap();
             _ = that
                 .tx
@@ -34,17 +33,31 @@ impl UserData for LoraBorderRef {
                 _ => {}
             }
 
-            _ = that.pos.raw_set("x", real_position[0]);
-            _ = that.pos.raw_set("y", real_position[1]);
-            Ok(that.pos.clone())
+            let pos = lua.create_table().unwrap();
+            _= pos.raw_set("x", real_position[0]);
+            _= pos.raw_set("y", real_position[1]);
+
+            let mt = lua.create_table()?;
+
+            let tx2 = that.tx.clone();
+            let rx2 = that.rx.clone();
+
+
+            mt.raw_set("__newindex", lua.create_function( // for SET
+                move |_, (this, key, value): (Table, String, f32)| {
+                    this.raw_set(key, value)?;
+                    let x = this.raw_get::<f32>("x").unwrap();
+                    let y = this.raw_get::<f32>("y").unwrap();
+                    _ = tx2.send(LoraToMainCommand::BorderSetPosition { uuid: that.uuid, x, y });
+                    _ = rx2.recv();
+                    Ok(())
+                })?)?;
+            pos.set_metatable(Some(mt))?;
+
+            Ok(pos)
         });
         fields.add_field_function_set("position", |_, this, nevw: Table| {
             let that = this.borrow::<LoraBorderRef>().unwrap();
-            println!(
-                "{}, {}",
-                nevw.raw_get::<f32>("x").unwrap(),
-                nevw.raw_get::<f32>("y").unwrap()
-            );
             _ = that.tx.send(LoraToMainCommand::BorderSetPosition {
                 uuid: that.uuid,
                 x: nevw.raw_get("x").unwrap(),

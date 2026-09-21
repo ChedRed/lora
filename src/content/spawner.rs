@@ -1,5 +1,5 @@
 use crossbeam::channel::{Receiver, Sender};
-use mlua::{Table, UserData, UserDataMethods};
+use mlua::{UserData, UserDataMethods};
 use rapier2d::{
     dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet},
     geometry::{ColliderBuilder, ColliderSet},

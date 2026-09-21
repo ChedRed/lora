@@ -1,12 +1,13 @@
 # lora
 
-LORA is a Lua framework that uses Rust's wgpu and winit libraries under the hood, meaning it is extremely fast and capable. At the same time, much of the hard programming is abstracted away into simple Lua functions such as ``lora.set.window.size(..)`` or ``lora.new.object(..)``. Additionally, Rust's rapier2d library is used to handle physics, which has much better performance in complicated scenarios than box2d!
+LORA is a Lua framework that uses Rust's wgpu and winit libraries under the hood, meaning it is extremely fast and capable. At the same time, much of the hard programming is abstracted away into simple Lua functions such as `lora.set.window.size(..)` or `lora.new.object(..)`. Additionally, Rust's rapier2d library is used to handle physics, which has much better performance in complicated scenarios than box2d!
 
 Soon enough there will be a [web url](lora.ched.red) that will hold the docs and more information about the project! For now, however, it is not up, and I'm not quite ready to publish this project.
 
 ## Functions
 
 Functions with '=' or '-' are implemented, with '-' meaning untested.
+
 ```
 [=] lora.set.window.title(text: string) -> nil
 [=] lora.set.window.size(w: int, h: int) -> nil
@@ -38,36 +39,33 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 
 [=] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
-lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
+[ ] lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 [ ] lora.Sound.stop() -> nil
 
 [-] lora.Border.id -> number
-[-] lora.Border.position <-> table[x: number, y: number]
+[ ] lora.Border.position <-> table[x: number, y: number]
 [-] lora.Border.angle <-> number
 [=] lora.Border.enable() -> nil
 [=] lora.Border.disable() -> nil
 [=] lora.Border.toggle() -> nil
 
-[=] lora.Shape.id() -> number
+[ ] lora.Shape.id -> number
 
-[=] lora.Collider.id() -> number
+[ ] lora.Collider.id -> number
 
-[=] lora.Spawner.id() -> number
+[ ] lora.Spawner.id -> number
 [=] lora.Spawner.spawn(x, y, r) -> lora.Object
 
-[=] lora.Object.id() -> number
-[=] lora.Object.set_position(x: number, y: number) -> nil
-[=] lora.Object.set_motion(x: number, y: number) -> nil
-[=] lora.Object.set_angle(r: number) -> nil
-[=] lora.Object.position() -> table[x: number, y: number]
-[=] lora.Object.center() -> table[x: number, y: number]
-[=] lora.Object.world_center() -> table[x: number, y: number]
-[=] lora.Object.motion() -> table[x: number, y: number]
-[=] lora.Object.angle() -> number
+[ ] lora.Object.id -> number
+[ ] lora.Object.world <-> table[x: number, y: number] // real pos
+[ ] lora.Object.position <-> table[x: number, y: number] // centered pos
+[ ] lora.Object.center -> table[x: number, y: number]
+[ ] lora.Object.motion <-> table[x: number, y: number]
+[ ] lora.Object.angle <-> number
 [=] lora.Object.impulse(x: number, y: number) -> nil
-[=] lora.Object.add_force(x: number, y: number) -> nil
-[=] lora.Object.add_world_force(x1: number, y1: number, x2: number, y2: number) -> nil
-[=] lora.Object.add_torque(r: number) -> nil
+[=] lora.Object.force(x: number, y: number) -> nil
+[=] lora.Object.world_force(x1: number, y1: number, x2: number, y2: number) -> nil
+[=] lora.Object.torque(r: number) -> nil
 [ ] lora.Object.show() -> nil
 [ ] lora.Object.hide() -> nil
 [=] lora.Object.enable() -> nil
@@ -172,7 +170,7 @@ Compiler will:
      |- Resources
      |  \- game.id.lora
      |- Info.plist
-  
+
 
 Lora will handle searching compiled filepaths like this:
 - Read length of code
