@@ -85,3 +85,7 @@ function lora.update(delta)
         PlayertwoObject:impulse(1, 0)
     end
 end
+
+function lora.draw()
+    lora.draw.rect(1, 1, 100, 100, 0, {255, 0, 0, 255})
+end

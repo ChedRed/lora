@@ -180,7 +180,7 @@ impl State {
         let size = window.inner_size();
         let surface = instance.create_surface(window.clone()).unwrap();
         let cap = surface.get_capabilities(&adapter);
-        let surface_format = cap.formats[0];
+        let surface_format = cap.formats[0].add_srgb_suffix();
 
         let (main_cmd, lora_cmd) = bounded::<LoraToMainCommand>(1);
         let (lora_rtrn, main_rtrn) = bounded::<MainToLoraCommand>(1);
@@ -523,7 +523,7 @@ impl State {
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: self.surface_format,
-            view_formats: vec![self.surface_format.add_srgb_suffix()],
+            view_formats: vec![self.surface_format],
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
             color_space: wgpu::SurfaceColorSpace::default(),
             width: self.size.width,
@@ -692,7 +692,7 @@ impl State {
         let texture_view = pretexture_view
             .texture
             .create_view(&wgpu::TextureViewDescriptor {
-                format: Some(self.surface_format.add_srgb_suffix()),
+                format: Some(self.surface_format),
                 ..Default::default()
             });
 
