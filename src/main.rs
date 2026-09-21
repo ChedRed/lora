@@ -7,7 +7,7 @@ use crossbeam::{
 use rodio::{Decoder, MixerDeviceSink, Source};
 use std::{io::Cursor, sync::mpsc};
 
-use rapier2d::prelude::*;
+use rapier2d::{prelude::*, utils::PoseOps};
 use std::{sync::Arc, thread::JoinHandle};
 use wgpu::{naga::FastHashMap, util::DeviceExt};
 use winit::event::{
@@ -855,10 +855,7 @@ impl State {
                         y: self.gpu_view.position[1] / RESOLUTION,
                     });
             }
-            LoraToMainCommand::NewBorder {
-                points,
-                indices,
-            } => {
+            LoraToMainCommand::NewBorder { points, indices } => {
                 let mut vertices: Vec<Vec2> = Vec::new();
                 for point in points {
                     vertices.push(Vec2 {
@@ -1133,7 +1130,7 @@ impl State {
             LoraToMainCommand::BorderPosition { uuid } => {
                 let border: &mut LoraBorder = self.lora_borders.get_mut(&uuid).unwrap();
                 let body = self.rigidbodies.get_mut(border.rigidhandle).unwrap();
-                let preposition = body.translation();
+                let preposition = body.next_position().translation();
                 let position: [f32; 2] = [preposition.x * RESOLUTION, preposition.y * RESOLUTION];
                 _ = self
                     .lora_rtrn
@@ -1142,7 +1139,7 @@ impl State {
             LoraToMainCommand::BorderAngle { uuid } => {
                 let border: &mut LoraBorder = self.lora_borders.get_mut(&uuid).unwrap();
                 let body = self.rigidbodies.get_mut(border.rigidhandle).unwrap();
-                let angle = body.rotation().angle();
+                let angle = body.next_position().rotation().angle();
                 _ = self
                     .lora_rtrn
                     .send(MainToLoraCommand::ReturnBorderGetAngle { angle });
@@ -1174,10 +1171,11 @@ impl State {
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
                 if let Some(body) = self.rigidbodies.get_mut(*object) {
+                    let pre_position = body.local_center_of_mass();
                     body.set_translation(
                         Vector2 {
-                            x: x / RESOLUTION,
-                            y: y / RESOLUTION,
+                            x: x / RESOLUTION + pre_position.x,
+                            y: y / RESOLUTION + pre_position.y,
                         },
                         true,
                     );
@@ -1215,7 +1213,7 @@ impl State {
                 }
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::ObjectPosition { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectWorld { parent_uuid, uuid } => {
                 let mut position: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -1226,18 +1224,9 @@ impl State {
                 }
                 _ = self
                     .lora_rtrn
-                    .send(MainToLoraCommand::ReturnObjectGetPosition { position });
+                    .send(MainToLoraCommand::ReturnObjectGetWorld { position });
             }
-            LoraToMainCommand::ObjectCenter { uuid } => {
-                let position: [f32; 2];
-                let spawner: &LoraSpawner = self.lora_spawners.get(&uuid).unwrap();
-                let preposition = spawner.center.unwrap();
-                position = [preposition.0, preposition.1];
-                _ = self
-                    .lora_rtrn
-                    .send(MainToLoraCommand::ReturnObjectGetCenter { position });
-            }
-            LoraToMainCommand::ObjectWorldCenter { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectPosition { parent_uuid, uuid } => {
                 let mut position: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -1248,7 +1237,7 @@ impl State {
                 }
                 _ = self
                     .lora_rtrn
-                    .send(MainToLoraCommand::ReturnObjectGetWorldCenter { position });
+                    .send(MainToLoraCommand::ReturnObjectGetPosition { position });
             }
             LoraToMainCommand::ObjectMotion { parent_uuid, uuid } => {
                 let mut motion: [f32; 2] = [0., 0.];
@@ -1287,7 +1276,7 @@ impl State {
                 }
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::ObjectAddForce {
+            LoraToMainCommand::ObjectForce {
                 parent_uuid,
                 uuid,
                 x,
@@ -1300,7 +1289,7 @@ impl State {
                 }
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::ObjectAddWorldForce {
+            LoraToMainCommand::ObjectShove {
                 parent_uuid,
                 uuid,
                 x1,
@@ -1319,7 +1308,7 @@ impl State {
                 }
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::ObjectAddTorque {
+            LoraToMainCommand::ObjectTorque {
                 parent_uuid,
                 uuid,
                 r,

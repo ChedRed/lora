@@ -33,25 +33,37 @@ impl UserData for LoraBorderRef {
                 _ => {}
             }
 
-            let pos = lua.create_table().unwrap();
-            _= pos.raw_set("x", real_position[0]);
-            _= pos.raw_set("y", real_position[1]);
+            let store = lua.create_table().unwrap();
+            _ = store.raw_set("x", real_position[0]);
+            _ = store.raw_set("y", real_position[1]);
 
             let mt = lua.create_table()?;
+
+            _ = mt.raw_set("__index", store);
 
             let tx2 = that.tx.clone();
             let rx2 = that.rx.clone();
 
+            mt.raw_set(
+                "__newindex",
+                lua.create_function(
+                    // for SET
+                    move |_, (this, key, value): (Table, String, f32)| {
+                        this.raw_set(key, value)?;
+                        let x = this.raw_get::<f32>("x").unwrap_or(0.);
+                        let y = this.raw_get::<f32>("y").unwrap_or(0.);
+                        _ = tx2.send(LoraToMainCommand::BorderSetPosition {
+                            uuid: that.uuid,
+                            x,
+                            y,
+                        });
+                        _ = rx2.recv();
+                        Ok(())
+                    },
+                )?,
+            )?;
 
-            mt.raw_set("__newindex", lua.create_function( // for SET
-                move |_, (this, key, value): (Table, String, f32)| {
-                    this.raw_set(key, value)?;
-                    let x = this.raw_get::<f32>("x").unwrap();
-                    let y = this.raw_get::<f32>("y").unwrap();
-                    _ = tx2.send(LoraToMainCommand::BorderSetPosition { uuid: that.uuid, x, y });
-                    _ = rx2.recv();
-                    Ok(())
-                })?)?;
+            let pos = lua.create_table()?;
             pos.set_metatable(Some(mt))?;
 
             Ok(pos)

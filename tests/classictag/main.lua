@@ -27,41 +27,50 @@ function lora.load()
         { 0,    0 },
     })
 
-    -- MapBorder.position.x = {x = 1000, y = 1}
-
     JumpSound = lora.new.sound("resources/jump.wav")
+
+
+    print("Shape ID", PlayerShape.id)
+    print("PlayerCollider ID: ", PlayerCollider.id)
+    print("Spawner ID: ", PlayerSpawner.id)
+    print("Player ID: ", PlayerObject.id)
+    print("MapBorder ID: ", MapBorder.id)
+    print("Sound ID: ", JumpSound.id)
+
+    -- print("Player Center: ", PlayerObject.center.x, PlayerObject.center.y)
+
+    PlayerObject.angle = 45
+    print("Player Angle: ", PlayerObject.angle)
 end
 
 function lora.collision(one, two)
     if one == MapBorder.id or two == MapBorder.id then
-        if one == PlayerObject:id() or two == PlayerObject:id() then
+        if one == PlayerObject.id or two == PlayerObject.id then
             PlayerJumped = false
         else
-            if one == PlayertwoObject:id() or two == PlayertwoObject:id() then
+            if one == PlayertwoObject.id or two == PlayertwoObject.id then
                 PlayertwoJumped = false
             end
         end
     end
 end
 
-function lora.keypressed(key)
-    if key == "w" then
+function lora.update(delta)
+    if lora.get.key.state("w") then
         if not PlayerJumped then
             PlayerJumped = true
             PlayerObject:impulse(0, 84)
             JumpSound:play(1, 1)
         end
     end
-    if key == "i" then
+    if lora.get.key.state("i") then
         if not PlayertwoJumped then
             PlayertwoJumped = true
             PlayertwoObject:impulse(0, 84)
             JumpSound:play(1, 1)
         end
     end
-end
 
-function lora.update(delta)
     if lora.get.key.state("a") then
         PlayerObject:impulse(-1, 0)
     end

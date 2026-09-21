@@ -37,34 +37,34 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
 [ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil
 
+[=] lora.Sound.id -> number
 [=] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
 [ ] lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 [ ] lora.Sound.stop() -> nil
 
-[-] lora.Border.id -> number
-[ ] lora.Border.position <-> table[x: number, y: number]
-[-] lora.Border.angle <-> number
+[=] lora.Border.id -> number
+[=] lora.Border.position <-> table[x: number, y: number]
+[=] lora.Border.angle <-> number
 [=] lora.Border.enable() -> nil
 [=] lora.Border.disable() -> nil
 [=] lora.Border.toggle() -> nil
 
-[ ] lora.Shape.id -> number
+[=] lora.Shape.id -> number
 
-[ ] lora.Collider.id -> number
+[=] lora.Collider.id -> number
 
-[ ] lora.Spawner.id -> number
+[=] lora.Spawner.id -> number
 [=] lora.Spawner.spawn(x, y, r) -> lora.Object
 
-[ ] lora.Object.id -> number
+[=] lora.Object.id -> number
 [ ] lora.Object.world <-> table[x: number, y: number] // real pos
 [ ] lora.Object.position <-> table[x: number, y: number] // centered pos
-[ ] lora.Object.center -> table[x: number, y: number]
 [ ] lora.Object.motion <-> table[x: number, y: number]
-[ ] lora.Object.angle <-> number
+[=] lora.Object.angle <-> number
 [=] lora.Object.impulse(x: number, y: number) -> nil
 [=] lora.Object.force(x: number, y: number) -> nil
-[=] lora.Object.world_force(x1: number, y1: number, x2: number, y2: number) -> nil
+[=] lora.Object.shove(x1: number, y1: number, x2: number, y2: number) -> nil
 [=] lora.Object.torque(r: number) -> nil
 [ ] lora.Object.show() -> nil
 [ ] lora.Object.hide() -> nil

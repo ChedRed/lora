@@ -48,7 +48,6 @@ Lora = {
         position = { x = 0, y = 0 },
         motion = { x = 0, y = 0 },
         angle = 0,
-        center = { x = 0, y = 0 },
         --- @param self Object
         --- @param x number
         --- @param y number
@@ -65,7 +64,7 @@ Lora = {
         --- @param x2 number
         --- @param y2 number
         --- @return nil
-        world_force = function(self, x1, y1, x2, y2) end,
+        shove = function(self, x1, y1, x2, y2) end,
         --- @param self Object
         --- @param r number
         --- @return nil
@@ -89,6 +88,7 @@ Lora = {
 
     --- @class Sound
     Sound = {
+        id = 0,
         --- @param self Sound
         --- @param volume number
         --- @param pitch number

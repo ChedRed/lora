@@ -1,5 +1,5 @@
 use crossbeam::channel::Sender;
-use mlua::{UserData, UserDataMethods};
+use mlua::UserData;
 
 use crate::utils::{LoraToMainCommand, Vertex};
 
@@ -10,8 +10,8 @@ pub struct LoraColliderRef {
 }
 
 impl UserData for LoraColliderRef {
-    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| Ok(this.uuid));
+    fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("id", |_, this| Ok(this.uuid));
     }
 }
 

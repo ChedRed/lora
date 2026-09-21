@@ -128,14 +128,11 @@ pub enum LoraToMainCommand {
         uuid: u128,
         r: f32,
     },
-    ObjectPosition {
+    ObjectWorld {
         parent_uuid: u128,
         uuid: u128,
     },
-    ObjectCenter {
-        uuid: u128,
-    },
-    ObjectWorldCenter {
+    ObjectPosition {
         parent_uuid: u128,
         uuid: u128,
     },
@@ -153,13 +150,13 @@ pub enum LoraToMainCommand {
         x: f32,
         y: f32,
     },
-    ObjectAddForce {
+    ObjectForce {
         parent_uuid: u128,
         uuid: u128,
         x: f32,
         y: f32,
     },
-    ObjectAddWorldForce {
+    ObjectShove {
         parent_uuid: u128,
         uuid: u128,
         x1: f32,
@@ -167,7 +164,7 @@ pub enum LoraToMainCommand {
         x2: f32,
         y2: f32,
     },
-    ObjectAddTorque {
+    ObjectTorque {
         parent_uuid: u128,
         uuid: u128,
         r: f32,
@@ -212,8 +209,7 @@ pub enum MainToLoraCommand {
     ReturnBorderGetPosition { position: [f32; 2] },
     ReturnBorderGetAngle { angle: f32 },
     ReturnObjectGetPosition { position: [f32; 2] },
-    ReturnObjectGetCenter { position: [f32; 2] },
-    ReturnObjectGetWorldCenter { position: [f32; 2] },
+    ReturnObjectGetWorld { position: [f32; 2] },
     ReturnObjectGetMotion { motion: [f32; 2] },
     ReturnObjectGetAngle { angle: f32 },
     Return,

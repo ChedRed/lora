@@ -14,8 +14,11 @@ pub struct LoraSoundRef {
 }
 
 impl UserData for LoraSoundRef {
+    fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("id", |_, this| Ok(this.uuid));
+    }
+
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| Ok(this.uuid));
         methods.add_method("play", |_, this, ()| {
             _ = this
                 .tx

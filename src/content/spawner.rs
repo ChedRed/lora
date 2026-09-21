@@ -1,5 +1,5 @@
 use crossbeam::channel::{Receiver, Sender};
-use mlua::{UserData, UserDataMethods};
+use mlua::{Table, UserData, UserDataMethods};
 use rapier2d::{
     dynamics::{RigidBody, RigidBodyBuilder, RigidBodyHandle, RigidBodySet},
     geometry::{ColliderBuilder, ColliderSet},
@@ -21,8 +21,10 @@ pub struct LoraSpawnerRef {
 }
 
 impl UserData for LoraSpawnerRef {
+    fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("id", |_, this| Ok(this.uuid));
+    }
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| Ok(this.uuid));
         methods.add_method("spawn", |_, this, (x, y, r)| {
             _ = this.tx.send(LoraToMainCommand::SpawnerSpawn {
                 uuid: this.uuid,
@@ -51,181 +53,34 @@ pub struct LoraObjectRef {
 }
 
 impl UserData for LoraObjectRef {
-    // fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
-    //     fields.add_field_method_get("id", |_, this| Ok(this.uuid));
-    //     fields.add_field_function_set("position", |_, this, nevw: Table| {
-    //         let that = this.borrow::<LoraObjectRef>().unwrap();
-    //         _ = that.tx.send(LoraToMainCommand::ObjectSetPosition {
-    //             parent_uuid: that.parent_uuid,
-    //             uuid: that.uuid,
-    //             x: nevw.raw_get("x").unwrap(),
-    //             y: nevw.raw_get("y").unwrap(),
-    //         });
-    //         _ = that.rx.recv();
-    //         Ok(())
-    //     });
-    //     fields.add_field_method_set("motion", |_, this, nevw: Table| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectSetMotion {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //             x: nevw.raw_get("x").unwrap(),
-    //             y: nevw.raw_get("y").unwrap(),
-    //         });
-    //         _ = this.rx.recv();
-    //         Ok(())
-    //     });
-    //     fields.add_method("set_angle", |_, this, r| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectSetAngle {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //             r,
-    //         });
-    //         _ = this.rx.recv();
-    //         Ok(())
-    //     });
-    //     fields.add_method("position", |_, this, ()| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectPosition {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //         });
-    //         let mut real_position: [f32; 2] = [0., 0.];
-    //         match this.rx.recv().unwrap() {
-    //             MainToLoraCommand::ReturnObjectGetPosition { position } => {
-    //                 real_position = position;
-    //             }
-    //             _ => {}
-    //         }
-    //         Ok(real_position)
-    //     });
-    //     fields.add_method("center", |_, this, ()| {
-    //         _ = this
-    //             .tx
-    //             .send(LoraToMainCommand::ObjectCenter { uuid: this.uuid });
-    //         let mut real_position: [f32; 2] = [0., 0.];
-    //         match this.rx.recv().unwrap() {
-    //             MainToLoraCommand::ReturnObjectGetCenter { position } => {
-    //                 real_position = position;
-    //             }
-    //             _ => {}
-    //         }
-    //         Ok(real_position)
-    //     });
-    //     fields.add_method("world_center", |_, this, ()| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectWorldCenter {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //         });
-    //         let mut real_position: [f32; 2] = [0., 0.];
-    //         match this.rx.recv().unwrap() {
-    //             MainToLoraCommand::ReturnObjectGetWorldCenter { position } => {
-    //                 real_position = position;
-    //             }
-    //             _ => {}
-    //         }
-    //         Ok(real_position)
-    //     });
-    //     fields.add_method("motion", |_, this, ()| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectMotion {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //         });
-    //         let mut real_motion: [f32; 2] = [0., 0.];
-    //         match this.rx.recv().unwrap() {
-    //             MainToLoraCommand::ReturnObjectGetMotion { motion } => {
-    //                 real_motion = motion;
-    //             }
-    //             _ => {}
-    //         }
-    //         Ok(real_motion)
-    //     });
-    //     fields.add_method("angle", |_, this, ()| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectAngle {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //         });
-    //         let mut real_angle: f32 = 0.;
-    //         match this.rx.recv().unwrap() {
-    //             MainToLoraCommand::ReturnObjectGetAngle { angle } => {
-    //                 real_angle = angle;
-    //             }
-    //             _ => {}
-    //         }
-    //         Ok(real_angle)
-    //     });
-    //     fields.add_method("impulse", |_, this, (x, y)| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectImpulse {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //             x,
-    //             y,
-    //         });
-    //         _ = this.rx.recv();
-    //         Ok(())
-    //     });
-    //     fields.add_method("add_force", |_, this, (x, y)| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectAddForce {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //             x,
-    //             y,
-    //         });
-    //         _ = this.rx.recv();
-    //         Ok(())
-    //     });
-    //     fields.add_method("add_world_force", |_, this, (x1, y1, x2, y2)| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectAddWorldForce {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //             x1,
-    //             y1,
-    //             x2,
-    //             y2,
-    //         });
-    //         _ = this.rx.recv();
-    //         Ok(())
-    //     });
-    //     fields.add_method("add_torque", |_, this, r| {
-    //         _ = this.tx.send(LoraToMainCommand::ObjectAddTorque {
-    //             parent_uuid: this.parent_uuid,
-    //             uuid: this.uuid,
-    //             r,
-    //         });
-    //         _ = this.rx.recv();
-    //         Ok(())
-    //     });
-    // }
-    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method("id", |_, this, ()| Ok(this.uuid));
-        methods.add_method("set_position", |_, this, (x, y)| {
-            _ = this.tx.send(LoraToMainCommand::ObjectSetPosition {
+    fn add_fields<F: mlua::prelude::LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("id", |_, this| Ok(this.uuid));
+        fields.add_field_method_get("world", |_, this| {
+            _ = this.tx.send(LoraToMainCommand::ObjectWorld {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
-                x,
-                y,
             });
-            _ = this.rx.recv();
+            let mut real_position: [f32; 2] = [0., 0.];
+            match this.rx.recv().unwrap() {
+                MainToLoraCommand::ReturnObjectGetWorld { position } => {
+                    real_position = position;
+                }
+                _ => {}
+            }
+            Ok(real_position)
+        });
+        fields.add_field_function_set("position", |_, this, nevw: Table| {
+            let that = this.borrow::<LoraObjectRef>().unwrap();
+            _ = that.tx.send(LoraToMainCommand::ObjectSetPosition {
+                parent_uuid: that.parent_uuid,
+                uuid: that.uuid,
+                x: nevw.raw_get("x").unwrap(),
+                y: nevw.raw_get("y").unwrap(),
+            });
+            _ = that.rx.recv();
             Ok(())
         });
-        methods.add_method("set_motion", |_, this, (x, y)| {
-            _ = this.tx.send(LoraToMainCommand::ObjectSetMotion {
-                parent_uuid: this.parent_uuid,
-                uuid: this.uuid,
-                x,
-                y,
-            });
-            _ = this.rx.recv();
-            Ok(())
-        });
-        methods.add_method("set_angle", |_, this, r| {
-            _ = this.tx.send(LoraToMainCommand::ObjectSetAngle {
-                parent_uuid: this.parent_uuid,
-                uuid: this.uuid,
-                r,
-            });
-            _ = this.rx.recv();
-            Ok(())
-        });
-        methods.add_method("position", |_, this, ()| {
+        fields.add_field_method_get("position", |_, this| {
             _ = this.tx.send(LoraToMainCommand::ObjectPosition {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
@@ -239,34 +94,17 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_position)
         });
-        methods.add_method("center", |_, this, ()| {
-            _ = this
-                .tx
-                .send(LoraToMainCommand::ObjectCenter { uuid: this.uuid });
-            let mut real_position: [f32; 2] = [0., 0.];
-            match this.rx.recv().unwrap() {
-                MainToLoraCommand::ReturnObjectGetCenter { position } => {
-                    real_position = position;
-                }
-                _ => {}
-            }
-            Ok(real_position)
-        });
-        methods.add_method("world_center", |_, this, ()| {
-            _ = this.tx.send(LoraToMainCommand::ObjectWorldCenter {
+        fields.add_field_method_set("motion", |_, this, nevw: Table| {
+            _ = this.tx.send(LoraToMainCommand::ObjectSetMotion {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
+                x: nevw.raw_get("x").unwrap(),
+                y: nevw.raw_get("y").unwrap(),
             });
-            let mut real_position: [f32; 2] = [0., 0.];
-            match this.rx.recv().unwrap() {
-                MainToLoraCommand::ReturnObjectGetWorldCenter { position } => {
-                    real_position = position;
-                }
-                _ => {}
-            }
-            Ok(real_position)
+            _ = this.rx.recv();
+            Ok(())
         });
-        methods.add_method("motion", |_, this, ()| {
+        fields.add_field_method_get("motion", |_, this| {
             _ = this.tx.send(LoraToMainCommand::ObjectMotion {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
@@ -280,13 +118,14 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_motion)
         });
-        methods.add_method("angle", |_, this, ()| {
-            _ = this.tx.send(LoraToMainCommand::ObjectAngle {
-                parent_uuid: this.parent_uuid,
-                uuid: this.uuid,
+        fields.add_field_function_get("angle", |_, this| {
+            let that = this.borrow::<LoraObjectRef>().unwrap();
+            _ = that.tx.send(LoraToMainCommand::ObjectAngle {
+                parent_uuid: that.parent_uuid,
+                uuid: that.uuid,
             });
             let mut real_angle: f32 = 0.;
-            match this.rx.recv().unwrap() {
+            match that.rx.recv().unwrap() {
                 MainToLoraCommand::ReturnObjectGetAngle { angle } => {
                     real_angle = angle;
                 }
@@ -294,6 +133,104 @@ impl UserData for LoraObjectRef {
             }
             Ok(real_angle)
         });
+        fields.add_field_function_set("angle", |_, this, r| {
+            let that = this.borrow::<LoraObjectRef>().unwrap();
+            _ = that.tx.send(LoraToMainCommand::ObjectSetAngle {
+                parent_uuid: that.parent_uuid,
+                uuid: that.uuid,
+                r,
+            });
+            _ = that.rx.recv();
+            Ok(())
+        });
+    }
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method("id", |_, this, ()| Ok(this.uuid));
+        // methods.add_method("set_position", |_, this, (x, y)| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectSetPosition {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //         x,
+        //         y,
+        //     });
+        //     _ = this.rx.recv();
+        //     Ok(())
+        // });
+        // methods.add_method("set_motion", |_, this, (x, y)| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectSetMotion {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //         x,
+        //         y,
+        //     });
+        //     _ = this.rx.recv();
+        //     Ok(())
+        // });
+        // methods.add_method("set_angle", |_, this, r| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectSetAngle {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //         r,
+        //     });
+        //     _ = this.rx.recv();
+        //     Ok(())
+        // });
+        // methods.add_method("position", |_, this, ()| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectPosition {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //     });
+        //     let mut real_position: [f32; 2] = [0., 0.];
+        //     match this.rx.recv().unwrap() {
+        //         MainToLoraCommand::ReturnObjectGetPosition { position } => {
+        //             real_position = position;
+        //         }
+        //         _ => {}
+        //     }
+        //     Ok(real_position)
+        // });
+        // methods.add_method("world_center", |_, this, ()| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectWorldCenter {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //     });
+        //     let mut real_position: [f32; 2] = [0., 0.];
+        //     match this.rx.recv().unwrap() {
+        //         MainToLoraCommand::ReturnObjectGetWorldCenter { position } => {
+        //             real_position = position;
+        //         }
+        //         _ => {}
+        //     }
+        //     Ok(real_position)
+        // });
+        // methods.add_method("motion", |_, this, ()| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectMotion {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //     });
+        //     let mut real_motion: [f32; 2] = [0., 0.];
+        //     match this.rx.recv().unwrap() {
+        //         MainToLoraCommand::ReturnObjectGetMotion { motion } => {
+        //             real_motion = motion;
+        //         }
+        //         _ => {}
+        //     }
+        //     Ok(real_motion)
+        // });
+        // methods.add_method("angle", |_, this, ()| {
+        //     _ = this.tx.send(LoraToMainCommand::ObjectAngle {
+        //         parent_uuid: this.parent_uuid,
+        //         uuid: this.uuid,
+        //     });
+        //     let mut real_angle: f32 = 0.;
+        //     match this.rx.recv().unwrap() {
+        //         MainToLoraCommand::ReturnObjectGetAngle { angle } => {
+        //             real_angle = angle;
+        //         }
+        //         _ => {}
+        //     }
+        //     Ok(real_angle)
+        // });
         methods.add_method("impulse", |_, this, (x, y)| {
             _ = this.tx.send(LoraToMainCommand::ObjectImpulse {
                 parent_uuid: this.parent_uuid,
@@ -304,8 +241,8 @@ impl UserData for LoraObjectRef {
             _ = this.rx.recv();
             Ok(())
         });
-        methods.add_method("add_force", |_, this, (x, y)| {
-            _ = this.tx.send(LoraToMainCommand::ObjectAddForce {
+        methods.add_method("force", |_, this, (x, y)| {
+            _ = this.tx.send(LoraToMainCommand::ObjectForce {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
                 x,
@@ -314,8 +251,8 @@ impl UserData for LoraObjectRef {
             _ = this.rx.recv();
             Ok(())
         });
-        methods.add_method("add_world_force", |_, this, (x1, y1, x2, y2)| {
-            _ = this.tx.send(LoraToMainCommand::ObjectAddWorldForce {
+        methods.add_method("shove", |_, this, (x1, y1, x2, y2)| {
+            _ = this.tx.send(LoraToMainCommand::ObjectShove {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
                 x1,
@@ -326,8 +263,8 @@ impl UserData for LoraObjectRef {
             _ = this.rx.recv();
             Ok(())
         });
-        methods.add_method("add_torque", |_, this, r| {
-            _ = this.tx.send(LoraToMainCommand::ObjectAddTorque {
+        methods.add_method("torque", |_, this, r| {
+            _ = this.tx.send(LoraToMainCommand::ObjectTorque {
                 parent_uuid: this.parent_uuid,
                 uuid: this.uuid,
                 r,
