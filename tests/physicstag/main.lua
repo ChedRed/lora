@@ -58,10 +58,10 @@ function lora.keypressed(key)
         end
     end
     if key == "r" then
-        PlayerObject:set_position(200, 0)
-        PlayerObject:set_motion(0, 0)
-        PlayertwoObject:set_position(2360, 0)
-        PlayertwoObject:set_motion(0, 0)
+        PlayerObject:position(200, 0)
+        PlayerObject:motion(0, 0)
+        PlayertwoObject:position(2360, 0)
+        PlayertwoObject:motion(0, 0)
         PlayerIt = true
     end
 end
@@ -88,27 +88,27 @@ end
 
 function lora.update(delta)
     if lora.get.key.state("a") then
-        PlayerObject:add_torque(2)
+        PlayerObject:torque(2)
     end
     if lora.get.key.state("d") then
-        PlayerObject:add_torque(-2)
+        PlayerObject:torque(-2)
 
     end
 
     if lora.get.key.state("j") then
-        PlayertwoObject:add_torque(2)
+        PlayertwoObject:torque(2)
     end
     if lora.get.key.state("l") then
-        PlayertwoObject:add_torque(-2)
+        PlayertwoObject:torque(-2)
     end
 end
 
 function lora.render()
     local drawpos;
     if PlayerIt then
-        drawpos = PlayerObject:world_center()
+        drawpos = PlayerObject:center()
     else
-        drawpos = PlayertwoObject:world_center()
+        drawpos = PlayertwoObject:center()
     end
     lora.draw.circle(drawpos[1], drawpos[2] + 50, 10, { 1, 1, 1, 1 })
 

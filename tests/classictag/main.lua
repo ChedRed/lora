@@ -16,15 +16,15 @@ function lora.load()
     PlayertwoObject = PlayertwoSpawner:spawn(2360, 100, 0)
 
     MapBorder = lora.new.border({
-        { 0,    0 },
-        { 2560, 0 },
+        { 0,    -10 },
+        { 2560, -10 },
     })
 
     MapUpperBorder = lora.new.border({
-        { 2560, 0 },
+        { 2560, -10 },
         { 2560, 1440 },
         { 0,    1440 },
-        { 0,    0 },
+        { 0,    -10 },
     })
 
     JumpSound = lora.new.sound("resources/jump.wav")
@@ -86,6 +86,6 @@ function lora.update(delta)
     end
 end
 
-function lora.draw()
-    lora.draw.rect(1, 1, 100, 100, 0, {255, 0, 0, 255})
+function lora.render()
+    lora.draw.circle(10, 10, 50, {1, 1, 0, 1})
 end
