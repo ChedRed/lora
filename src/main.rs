@@ -1091,10 +1091,12 @@ impl State {
             }
             LoraToMainCommand::SpawnerSpawn { uuid, x, y, r } => {
                 let spawner: &mut LoraSpawner = self.lora_spawners.get_mut(&uuid).unwrap();
+                let center = spawner.center.unwrap();
+
                 spawner.spawn(
                     self.uuid,
-                    x / RESOLUTION,
-                    y / RESOLUTION,
+                    x / RESOLUTION - center.0,
+                    y / RESOLUTION - center.1,
                     r.to_radians(),
                     &mut self.rigidbodies,
                     &mut self.colliders,
@@ -1162,20 +1164,66 @@ impl State {
                 body.set_enabled(!body.is_enabled());
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
+            LoraToMainCommand::ObjectSetWorld {
+                parent_uuid,
+                uuid,
+                x,
+                y,
+                c,
+            } => {
+                let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
+                let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
+
+                if let Some(body) = self.rigidbodies.get_mut(*object) {
+                    let oldpos = body.translation();
+
+                    let mut n_x = x;
+                    let mut n_y = y;
+
+                    if !c.contains("x") {
+                        n_x = oldpos.x * RESOLUTION;
+                    }
+                    if !c.contains("y") {
+                        n_y = oldpos.y * RESOLUTION;
+                    }
+
+                    body.set_translation(
+                        Vector2 {
+                            x: n_x / RESOLUTION,
+                            y: n_y / RESOLUTION,
+                        },
+                        true,
+                    );
+                }
+                _ = self.lora_rtrn.send(MainToLoraCommand::Return);
+            }
             LoraToMainCommand::ObjectSetPosition {
                 parent_uuid,
                 uuid,
                 x,
                 y,
+                c,
             } => {
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
                 if let Some(body) = self.rigidbodies.get_mut(*object) {
-                    let pre_position = body.local_center_of_mass();
+                    let pre_position = body.center_of_mass();
+                    let pre_translation = body.translation();
+
+                    let mut n_x = x;
+                    let mut n_y = y;
+
+                    if !c.contains("x") {
+                        n_x = body.center_of_mass().x * RESOLUTION;
+                    }
+                    if !c.contains("y") {
+                        n_y = body.center_of_mass().y * RESOLUTION;
+                    }
+
                     body.set_translation(
                         Vector2 {
-                            x: x / RESOLUTION + pre_position.x,
-                            y: y / RESOLUTION + pre_position.y,
+                            x: n_x / RESOLUTION - pre_position.x + pre_translation.x,
+                            y: n_y / RESOLUTION - pre_position.y + pre_translation.y,
                         },
                         true,
                     );
@@ -1187,11 +1235,28 @@ impl State {
                 uuid,
                 x,
                 y,
+                r,
+                c,
             } => {
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
                 if let Some(body) = self.rigidbodies.get_mut(*object) {
-                    body.set_linvel(Vector2 { x, y }, true);
+                    let mut n_x = x;
+                    let mut n_y = y;
+                    let mut n_r = r;
+
+                    if !c.contains("x") {
+                        n_x = body.linvel().x;
+                    }
+                    if !c.contains("y") {
+                        n_y = body.linvel().y;
+                    }
+                    if !c.contains("r") {
+                        n_r = body.angvel();
+                    }
+
+                    body.set_linvel(Vector2 { x: n_x, y: n_y }, true);
+                    body.set_angvel(n_r, true);
                 }
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
@@ -1213,7 +1278,7 @@ impl State {
                 }
                 _ = self.lora_rtrn.send(MainToLoraCommand::Return);
             }
-            LoraToMainCommand::ObjectWorld { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectGetWorld { parent_uuid, uuid } => {
                 let mut position: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -1226,7 +1291,7 @@ impl State {
                     .lora_rtrn
                     .send(MainToLoraCommand::ReturnObjectGetWorld { position });
             }
-            LoraToMainCommand::ObjectPosition { parent_uuid, uuid } => {
+            LoraToMainCommand::ObjectGetPosition { parent_uuid, uuid } => {
                 let mut position: [f32; 2] = [0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
@@ -1239,14 +1304,16 @@ impl State {
                     .lora_rtrn
                     .send(MainToLoraCommand::ReturnObjectGetPosition { position });
             }
-            LoraToMainCommand::ObjectMotion { parent_uuid, uuid } => {
-                let mut motion: [f32; 2] = [0., 0.];
+            LoraToMainCommand::ObjectGetMotion { parent_uuid, uuid } => {
+                let mut motion: [f32; 3] = [0., 0., 0.];
                 let spawner: &LoraSpawner = self.lora_spawners.get(&parent_uuid).unwrap();
                 let object: &RigidBodyHandle = spawner.rigidhandles.get(&uuid).unwrap();
                 if let Some(body) = self.rigidbodies.get_mut(*object) {
                     let pre_motion = body.linvel();
+                    let pre_motionang = body.angvel();
                     motion[0] = pre_motion.x;
                     motion[1] = pre_motion.y;
+                    motion[2] = pre_motionang;
                 }
                 _ = self
                     .lora_rtrn

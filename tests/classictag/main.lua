@@ -1,6 +1,7 @@
 local PlayerJumped = false
 local PlayertwoJumped = false
 
+--- @diagnostic disable duplicate-set-field
 function lora.load()
     lora.set.physics.gravity(0, -50)
     lora.set.physics.hertz(200)
@@ -37,7 +38,7 @@ function lora.load()
     print("MapBorder ID: ", MapBorder.id)
     print("Sound ID: ", JumpSound.id)
 
-    -- print("Player Center: ", PlayerObject.center.x, PlayerObject.center.y)
+    print("Player Center: ", PlayerObject.center.x, PlayerObject.center.y)
 
     PlayerObject.angle = 45
     print("Player Angle: ", PlayerObject.angle)

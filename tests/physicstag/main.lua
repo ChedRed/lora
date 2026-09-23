@@ -7,26 +7,26 @@ function lora.load()
     lora.set.physics.gravity(0, -10)
     lora.set.physics.hertz(200)
 
-    -- PlayerShape = lora.new.mesh({
-    --     { 0.,   0.,   0., 0., 1., 0., 0., 1. },
-    --     { -6.4, 25.6, 0., 0., 1., 0., 0., 1. },
-    --     { 32.,  0.,   0., 0., 1., 0., 0., 1. },
-    --     { 16,   40,   0., 0., 1., 0., 0., 1. },
-    --     { 38.4, 25.6, 0., 0., 1., 0., 0., 1. },
-    -- }, { 0, 1, 2, 3, 4 })
-    PlayerShape = lora.new.shape("rectangle", 48, 48, {1, 0, 0, 0})
+    PlayerShape = lora.new.mesh({
+        { 0.,   0.,   0., 0., 1., 0., 0., 1. },
+        { -6.4, 25.6, 0., 0., 1., 0., 0., 1. },
+        { 32.,  0.,   0., 0., 1., 0., 0., 1. },
+        { 16,   40,   0., 0., 1., 0., 0., 1. },
+        { 38.4, 25.6, 0., 0., 1., 0., 0., 1. },
+    }, { 0, 1, 2, 3, 4 })
+    -- PlayerShape = lora.new.shape("rectangle", 48, 48, {1, 0, 0, 0})
     PlayerCollider = lora.new.collider(PlayerShape, "dynamic")
     PlayerSpawner = lora.new.spawner(PlayerShape, PlayerCollider)
     PlayerObject = PlayerSpawner:spawn(200, 100, 0)
 
-    -- PlayertwoShape = lora.new.mesh({
-    --     { 0.,   0.,   0., 0., 0., 1., 0., 1. },
-    --     { -6.4, 25.6, 0., 0., 0., 1., 0., 1. },
-    --     { 32.,  0.,   0., 0., 0., 1., 0., 1. },
-    --     { 16,   40,   0., 0., 0., 1., 0., 1. },
-    --     { 38.4, 25.6, 0., 0., 0., 1., 0., 1. },
-    -- }, { 0, 1, 2, 3, 4 })
-    PlayertwoShape = lora.new.shape("rectangle", 48, 48, {0, 1, 0, 0})
+    PlayertwoShape = lora.new.mesh({
+        { 0.,   0.,   0., 0., 0., 1., 0., 1. },
+        { -6.4, 25.6, 0., 0., 0., 1., 0., 1. },
+        { 32.,  0.,   0., 0., 0., 1., 0., 1. },
+        { 16,   40,   0., 0., 0., 1., 0., 1. },
+        { 38.4, 25.6, 0., 0., 0., 1., 0., 1. },
+    }, { 0, 1, 2, 3, 4 })
+    -- PlayertwoShape = lora.new.shape("rectangle", 48, 48, {0, 1, 0, 0})
     PlayertwoCollider = lora.new.collider(PlayertwoShape, "dynamic")
     PlayertwoSpawner = lora.new.spawner(PlayertwoShape, PlayertwoCollider)
     PlayertwoObject = PlayertwoSpawner:spawn(2360, 100, 0)
@@ -58,10 +58,10 @@ function lora.keypressed(key)
         end
     end
     if key == "r" then
-        PlayerObject:position(200, 0)
-        PlayerObject:motion(0, 0)
-        PlayertwoObject:position(2360, 0)
-        PlayertwoObject:motion(0, 0)
+        PlayerObject.position.y = { x = 200, y = 100 }
+        PlayerObject.motion = { x = 0, y = 0, r = 0 }
+        PlayertwoObject.position = { x = 2360, y = 100 }
+        PlayertwoObject.motion = { x = 0, y = 0, r = 0 }
         PlayerIt = true
     end
 end
@@ -76,8 +76,8 @@ function lora.keyreleased(key)
 end
 
 function lora.collision(one, two)
-    PlayerUUID = PlayerObject:id()
-    PlayertwoUUID = PlayertwoObject:id()
+    PlayerUUID = PlayerObject.id
+    PlayertwoUUID = PlayertwoObject.id
 
     if one == PlayerUUID or one == PlayertwoUUID then
         if two == PlayerUUID or two == PlayertwoUUID then
@@ -106,14 +106,15 @@ end
 function lora.render()
     local drawpos;
     if PlayerIt then
-        drawpos = PlayerObject:center()
+        drawpos = PlayerObject.position
     else
-        drawpos = PlayertwoObject:center()
+        drawpos = PlayertwoObject.position
     end
-    lora.draw.circle(drawpos[1], drawpos[2] + 50, 10, { 1, 1, 1, 1 })
 
-    lora.draw.line(0, 0, 3024, 0, 1, {0, 0, 1, 1})
-    lora.draw.line(3024, 0, 3024, 1964, 1, {0, 0, 1, 1})
-    lora.draw.line(3024, 1964, 0, 1964, 1, {0, 0, 1, 1})
-    lora.draw.line(0, 1964, 0, 0, 1, {0, 0, 1, 1})
+    lora.draw.circle(drawpos.x, drawpos.y + 50, 10, { 1, 1, 1, 1 })
+
+    lora.draw.line(0, 0, 2560, 0, 1, {0, 0, 1, 1})
+    lora.draw.line(2560, 0, 2560, 1440, 1, {0, 0, 1, 1})
+    lora.draw.line(2560, 1440, 0, 1440, 1, {0, 0, 1, 1})
+    lora.draw.line(0, 1440, 0, 0, 1, {0, 0, 1, 1})
 end

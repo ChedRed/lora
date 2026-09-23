@@ -275,4 +275,5 @@ Lora = {
     }
 }
 
+--- @diagnostic disable duplicate-set-field
 lora = Lora

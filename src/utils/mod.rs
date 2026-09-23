@@ -111,32 +111,42 @@ pub enum LoraToMainCommand {
     BorderToggle {
         uuid: u128,
     },
+    ObjectSetWorld {
+        parent_uuid: u128,
+        uuid: u128,
+        x: f32,
+        y: f32,
+        c: String,
+    },
     ObjectSetPosition {
         parent_uuid: u128,
         uuid: u128,
         x: f32,
         y: f32,
+        c: String,
     },
     ObjectSetMotion {
         parent_uuid: u128,
         uuid: u128,
         x: f32,
         y: f32,
+        r: f32,
+        c: String,
     },
     ObjectSetAngle {
         parent_uuid: u128,
         uuid: u128,
         r: f32,
     },
-    ObjectWorld {
+    ObjectGetWorld {
         parent_uuid: u128,
         uuid: u128,
     },
-    ObjectPosition {
+    ObjectGetPosition {
         parent_uuid: u128,
         uuid: u128,
     },
-    ObjectMotion {
+    ObjectGetMotion {
         parent_uuid: u128,
         uuid: u128,
     },
@@ -210,7 +220,7 @@ pub enum MainToLoraCommand {
     ReturnBorderGetAngle { angle: f32 },
     ReturnObjectGetPosition { position: [f32; 2] },
     ReturnObjectGetWorld { position: [f32; 2] },
-    ReturnObjectGetMotion { motion: [f32; 2] },
+    ReturnObjectGetMotion { motion: [f32; 3] },
     ReturnObjectGetAngle { angle: f32 },
     Return,
 }

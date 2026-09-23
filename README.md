@@ -58,9 +58,9 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.Spawner.spawn(x, y, r) -> lora.Object
 
 [=] lora.Object.id -> number
-[ ] lora.Object.world <-> table[x: number, y: number] // real pos
-[ ] lora.Object.position <-> table[x: number, y: number] // centered pos
-[ ] lora.Object.motion <-> table[x: number, y: number]
+[=] lora.Object.world <-> table[x: number, y: number] // real pos
+[=] lora.Object.position <-> table[x: number, y: number] // centered pos
+[=] lora.Object.motion <-> table[x: number, y: number, r: number]
 [=] lora.Object.angle <-> number
 [=] lora.Object.impulse(x: number, y: number) -> nil
 [=] lora.Object.force(x: number, y: number) -> nil
@@ -91,7 +91,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 ```
 [ ] Font
 [=] Shape
-[ ] Sound
+[=] Sound
 [=] Spawner
 [=] Border
 [=] Object

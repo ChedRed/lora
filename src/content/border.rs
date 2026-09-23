@@ -33,7 +33,7 @@ impl UserData for LoraBorderRef {
                 _ => {}
             }
 
-            let store = lua.create_table().unwrap();
+            let store = lua.create_table().unwrap(); // TODO: move to a separate function
             _ = store.raw_set("x", real_position[0]);
             _ = store.raw_set("y", real_position[1]);
 
