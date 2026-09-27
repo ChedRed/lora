@@ -1,13 +1,18 @@
+use std::sync::Arc;
+
 use crossbeam::channel::{Receiver, Sender};
 use mlua::{Function, UserDataRef};
+use winit::window::Window;
 
 use crate::{
+    GPUView,
     content::{
         border::LoraBorderRef, collider::LoraColliderRef, shape::LoraShapeRef, sound::LoraSoundRef,
         spawner::LoraSpawnerRef,
     },
     utils::{
         LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, fatal,
+        filer::Filer,
         print::{serorln, vbosln},
     },
 };
@@ -198,10 +203,7 @@ impl Lora {
                 let rx = main_rtrn.clone();
 
                 move |_, (points, indices)| {
-                    _ = tx.send(LoraToMainCommand::NewBorder {
-                        points,
-                        indices,
-                    });
+                    _ = tx.send(LoraToMainCommand::NewBorder { points, indices });
                     let mut new_border: Option<LoraBorderRef> = None;
                     match rx.recv().unwrap() {
                         MainToLoraCommand::ReturnNewBorder { border } => {
@@ -697,4 +699,15 @@ impl Lora {
             }
         }
     }
+}
+
+pub struct LoraCommandContext<'a> {
+    pub device: &'a wgpu::Device,
+    pub queue: &'a wgpu::Queue,
+    pub window: &'a Arc<Window>,
+    pub texture_bind_layout: &'a wgpu::BindGroupLayout,
+    pub gpu_view: &'a mut GPUView,
+    pub delta: &'a mut chrono::TimeDelta,
+    pub filer: &'a Filer,
+    pub size: winit::dpi::PhysicalSize<u32>,
 }
