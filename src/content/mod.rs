@@ -22,21 +22,17 @@ use rapier2d::{
     pipeline::{ChannelEventCollector, PhysicsPipeline},
 };
 use rodio::{Decoder, MixerDeviceSink, Source};
-use std::{
-    io::Cursor,
-    sync::{Arc, mpsc},
-    thread::JoinHandle,
-};
+use std::{io::Cursor, sync::mpsc, thread::JoinHandle};
 use wgpu::naga::FastHashMap;
 
+use winit::dpi::PhysicalSize;
 use winit::event::{
     MouseButton,
     MouseScrollDelta::{self, LineDelta, PixelDelta},
 };
-use winit::{dpi::PhysicalSize, window::Window};
 
 use crate::{
-    GPUView, RESOLUTION,
+    RESOLUTION,
     content::{
         border::{LoraBorder, LoraBorderRef},
         collider::{LoraCollider, LoraColliderRef},
@@ -98,10 +94,10 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(device: &wgpu::Device, filer: Filer, verbose: bool) -> Self {
+    pub fn new(filer: Filer, verbose: bool, ctx: &mut LoraCommandContext<'_>) -> Self {
         let lua_code: String = filer.read_code();
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = ctx.device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             address_mode_w: wgpu::AddressMode::ClampToEdge,
@@ -206,12 +202,12 @@ impl Engine {
         };
 
         _ = engine.lora_call.send(MainToLoraCall::Load);
-        engine.handle_lora_loop();
+        engine.handle_lora_loop(ctx);
 
         engine
     }
 
-    pub fn keyboard_inputs(&mut self, state: bool, key: String) {
+    pub fn keyboard_inputs(&mut self, state: bool, key: String, ctx: &mut LoraCommandContext<'_>) {
         if state {
             self.keys.push(key.clone());
             _ = self
@@ -223,10 +219,15 @@ impl Engine {
                 .lora_call
                 .send(MainToLoraCall::Keyreleased { code: key });
         }
-        self.handle_lora_loop();
+        self.handle_lora_loop(ctx);
     }
 
-    pub fn mouse_button_inputs(&mut self, button: MouseButton, state: bool) {
+    pub fn mouse_button_inputs(
+        &mut self,
+        button: MouseButton,
+        state: bool,
+        ctx: &mut LoraCommandContext<'_>,
+    ) {
         let numerical_button: u32;
         match button {
             MouseButton::Left => {
@@ -261,18 +262,22 @@ impl Engine {
                 button: numerical_button,
             });
         }
-        self.handle_lora_loop();
+        self.handle_lora_loop(ctx);
     }
 
-    pub fn mouse_movement_inputs(&mut self, motion: (f64, f64)) {
+    pub fn mouse_movement_inputs(&mut self, motion: (f64, f64), ctx: &mut LoraCommandContext<'_>) {
         let simple_motion: (f32, f32) = (motion.0 as f32, motion.1 as f32);
         _ = self.lora_call.send(MainToLoraCall::MouseMoved {
             motion: simple_motion,
         });
-        self.handle_lora_loop();
+        self.handle_lora_loop(ctx);
     }
 
-    pub fn mouse_scroll_inputs(&mut self, delta: MouseScrollDelta) {
+    pub fn mouse_scroll_inputs(
+        &mut self,
+        delta: MouseScrollDelta,
+        ctx: &mut LoraCommandContext<'_>,
+    ) {
         let simple_motion: (f32, f32);
         match delta {
             PixelDelta(position) => {
@@ -285,28 +290,20 @@ impl Engine {
         _ = self.lora_call.send(MainToLoraCall::MouseScrolled {
             motion: simple_motion,
         });
-        self.handle_lora_loop();
+        self.handle_lora_loop(ctx);
     }
 
     pub fn object_prerender(
         &mut self,
-        queue: &wgpu::Queue,
         renderpass: &mut wgpu::RenderPass,
         current_time: chrono::DateTime<chrono::Utc>,
-        delta: &mut chrono::TimeDelta,
-
-        device: &wgpu::Device,
-        window: &Arc<Window>,
-        texture_bind_layout: &wgpu::BindGroupLayout,
-        gpu_view: &mut GPUView,
-        filer: &Filer,
-        size: winit::dpi::PhysicalSize<u32>,
+        ctx: &mut LoraCommandContext<'_>,
     ) {
         while self.timestep < current_time {
             _ = self.lora_call.send(MainToLoraCall::Update {
                 delta: self.integration_parameters.dt,
             });
-            self.handle_lora_loop();
+            self.handle_lora_loop(ctx);
 
             self.physics.step(
                 self.gravity,
@@ -337,21 +334,13 @@ impl Engine {
                             .unwrap()
                             .user_data;
                         _ = self.lora_call.send(MainToLoraCall::Collision { one, two });
-                        self.handle_lora_loop(
-                            device,
-                            queue,
-                            window,
-                            texture_bind_layout,
-                            gpu_view,
-                            delta,
-                            size,
-                        );
+                        self.handle_lora_loop(ctx);
                     }
                     CollisionEvent::Stopped(_collider1, _collider2, _flags) => {}
                 }
             }
 
-            self.timestep += delta;
+            self.timestep += *ctx.delta;
         }
 
         for obj in self.lora_spawners.iter_mut() {
@@ -375,7 +364,7 @@ impl Engine {
 
                             let locations: Vec<Location> =
                                 obj.1.locations.values().copied().collect();
-                            queue.write_buffer(
+                            ctx.queue.write_buffer(
                                 &real_location_buffer,
                                 0,
                                 bytemuck::cast_slice(&locations),
@@ -404,30 +393,30 @@ impl Engine {
 
     pub fn primitive_prerender(
         &mut self,
-        queue: &wgpu::Queue,
         primitive_buffer: &wgpu::Buffer,
-        size: winit::dpi::PhysicalSize<u32>,
+        ctx: &mut LoraCommandContext<'_>,
     ) {
         _ = self.lora_call.send(MainToLoraCall::Render);
-        self.handle_lora_loop();
+        self.handle_lora_loop(ctx);
 
         let mut primitive_box: GPUPrimitives =
             GPUPrimitives::from_vec(self.primitives.len() as u32, &self.primitives);
-        primitive_box.scale = [size.width as f32, size.height as f32];
+        primitive_box.scale = [ctx.size.width as f32, ctx.size.height as f32];
         self.primitives.clear();
 
-        queue.write_buffer(primitive_buffer, 0, &bytemuck::bytes_of(&[primitive_box]));
+        ctx.queue
+            .write_buffer(primitive_buffer, 0, &bytemuck::bytes_of(&[primitive_box]));
     }
 
-    pub fn exit(&mut self) {
+    pub fn exit(&mut self, ctx: &mut LoraCommandContext<'_>) {
         _ = self.lora_call.send(MainToLoraCall::Exit);
-        self.handle_lora_loop();
+        self.handle_lora_loop(ctx);
         if let Some(join_handle) = self.lora_handle.take() {
             _ = join_handle.join();
         };
     }
 
-    fn handle_lora_commands(&mut self, v: LoraToMainCommand, ctx: LoraCommandContext) {
+    fn handle_lora_commands(&mut self, v: LoraToMainCommand, ctx: &mut LoraCommandContext<'_>) {
         match v {
             LoraToMainCommand::SetWindowTitle { text } => {
                 ctx.window.set_title(text.as_str());
@@ -1055,12 +1044,12 @@ impl Engine {
         }
     }
 
-    fn handle_lora_loop(&mut self, ctx: LoraCommandContext<'_>) {
+    fn handle_lora_loop(&mut self, ctx: &mut LoraCommandContext<'_>) {
         loop {
             select! {
                 recv(self.lora_cmd) -> cmd => {
                     if let Ok(v) = cmd {
-                        self.handle_lora_commands(v, &ctx);
+                        self.handle_lora_commands(v, ctx);
                     }
                 }
                 recv(self.lora_back) -> _ => {

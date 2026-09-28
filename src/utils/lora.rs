@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crossbeam::channel::{Receiver, Sender};
 use mlua::{Function, UserDataRef};
 use winit::window::Window;
@@ -12,7 +10,6 @@ use crate::{
     },
     utils::{
         LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, fatal,
-        filer::Filer,
         print::{serorln, vbosln},
     },
 };
@@ -704,10 +701,9 @@ impl Lora {
 pub struct LoraCommandContext<'a> {
     pub device: &'a wgpu::Device,
     pub queue: &'a wgpu::Queue,
-    pub window: &'a Arc<Window>,
+    pub window: &'a Window,
     pub texture_bind_layout: &'a wgpu::BindGroupLayout,
     pub gpu_view: &'a mut GPUView,
     pub delta: &'a mut chrono::TimeDelta,
-    pub filer: &'a Filer,
-    pub size: winit::dpi::PhysicalSize<u32>,
+    pub size: &'a winit::dpi::PhysicalSize<u32>,
 }

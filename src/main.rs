@@ -16,6 +16,8 @@ use utils::{Location, Vertex, filer::Filer, print::*};
 pub mod compiler;
 use compiler::compile;
 
+use crate::utils::lora::LoraCommandContext;
+
 const RESOLUTION: f32 = 100.;
 
 #[derive(Parser, Debug)]
@@ -94,6 +96,8 @@ struct State {
 
 impl State {
     async fn new(window: Arc<Window>, argus: Args, filer: Filer) -> State {
+        let mut delta = chrono::TimeDelta::new(0, 10_000_000).unwrap();
+
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
             backend_options: wgpu::BackendOptions::default(),
@@ -115,9 +119,7 @@ impl State {
             .await
             .unwrap();
 
-        let engine = Engine::new(&device, filer, argus.verbose);
-
-        let size = window.inner_size();
+        let mut size = window.inner_size();
         let surface = instance.create_surface(window.clone()).unwrap();
         let cap = surface.get_capabilities(&adapter);
         let surface_format = cap.formats[0].add_srgb_suffix();
@@ -329,13 +331,23 @@ impl State {
             cache: None,
         });
 
+        let ctx = &mut LoraCommandContext {
+            device: &device,
+            queue: &queue,
+            window: window.as_ref(),
+            texture_bind_layout: &texture_bind_layout,
+            gpu_view: &mut gpu_view,
+            delta: &mut delta,
+            size: &mut size,
+        };
+        let engine = Engine::new(filer, argus.verbose, ctx);
+
         let mut state = State {
             argus,
-            filer,
 
             current_time: chrono::Utc::now(),
             last_time: chrono::Utc::now(),
-            delta: chrono::TimeDelta::new(0, 10_000_000).unwrap(),
+            delta,
             surface,
             surface_format,
             msaa_view,
@@ -406,19 +418,55 @@ impl State {
     }
 
     fn keyboard_inputs(&mut self, key: String, state: bool) {
-        self.engine.keyboard_inputs(state, key);
+        let ctx = &mut LoraCommandContext {
+            device: &self.device,
+            queue: &self.queue,
+            window: self.window.as_ref(),
+            texture_bind_layout: &self.texture_bind_layout,
+            gpu_view: &mut self.gpu_view,
+            delta: &mut self.delta,
+            size: &mut self.size,
+        };
+        self.engine.keyboard_inputs(state, key, ctx);
     }
 
     fn mouse_button_inputs(&mut self, button: MouseButton, state: bool) {
-        self.engine.mouse_button_inputs(button, state);
+        let ctx = &mut LoraCommandContext {
+            device: &self.device,
+            queue: &self.queue,
+            window: self.window.as_ref(),
+            texture_bind_layout: &self.texture_bind_layout,
+            gpu_view: &mut self.gpu_view,
+            delta: &mut self.delta,
+            size: &mut self.size,
+        };
+        self.engine.mouse_button_inputs(button, state, ctx);
     }
 
     fn mouse_movement_inputs(&mut self, motion: (f64, f64)) {
-        self.engine.mouse_movement_inputs(motion);
+        let ctx = &mut LoraCommandContext {
+            device: &self.device,
+            queue: &self.queue,
+            window: self.window.as_ref(),
+            texture_bind_layout: &self.texture_bind_layout,
+            gpu_view: &mut self.gpu_view,
+            delta: &mut self.delta,
+            size: &mut self.size,
+        };
+        self.engine.mouse_movement_inputs(motion, ctx);
     }
 
     fn mouse_scroll_inputs(&mut self, delta: MouseScrollDelta) {
-        self.engine.mouse_scroll_inputs(delta);
+        let ctx = &mut LoraCommandContext {
+            device: &self.device,
+            queue: &self.queue,
+            window: self.window.as_ref(),
+            texture_bind_layout: &self.texture_bind_layout,
+            gpu_view: &mut self.gpu_view,
+            delta: &mut self.delta,
+            size: &mut self.size,
+        };
+        self.engine.mouse_scroll_inputs(delta, ctx);
     }
 
     fn render(&mut self) {
@@ -469,15 +517,23 @@ impl State {
         );
 
         renderpass.set_pipeline(&self.render_pipeline);
-        self.engine
-            .object_prerender(&self.queue, &mut renderpass, self.current_time, self.delta);
+        let ctx = &mut LoraCommandContext {
+            device: &self.device,
+            queue: &self.queue,
+            window: self.window.as_ref(),
+            texture_bind_layout: &self.texture_bind_layout,
+            gpu_view: &mut self.gpu_view,
+            delta: &mut self.delta,
+            size: &mut self.size,
+        };
         renderpass.set_bind_group(0, &self.gpu_view_bind_group, &[]);
+        self.engine
+            .object_prerender(&mut renderpass, self.current_time, ctx);
 
         renderpass.set_pipeline(&self.primitive_pipeline);
-        self.engine
-            .primitive_prerender(&self.queue, &self.primitive_buffer, self.size);
-
         renderpass.set_bind_group(0, &self.primitive_bind_group, &[]);
+        self.engine.primitive_prerender(&self.primitive_buffer, ctx);
+
         renderpass.draw(0..3, 0..1);
 
         drop(renderpass);
@@ -489,20 +545,17 @@ impl State {
         self.last_time = self.current_time;
     }
 
-    fn lora_context(&mut self) -> LoraCommandContext<'_> {
-        LoraCommandContext {
+    fn exit(&mut self) {
+        let ctx = &mut LoraCommandContext {
             device: &self.device,
             queue: &self.queue,
             window: self.window.as_ref(),
             texture_bind_layout: &self.texture_bind_layout,
             gpu_view: &mut self.gpu_view,
             delta: &mut self.delta,
-            size: self.size,
-        }
-    }
-
-    fn exit(&mut self) {
-        self.engine.exit();
+            size: &mut self.size,
+        };
+        self.engine.exit(ctx);
     }
 }
 
