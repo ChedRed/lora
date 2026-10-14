@@ -340,7 +340,7 @@ impl State {
             delta: &mut delta,
             size: &mut size,
         };
-        let engine = Engine::new(filer, argus.verbose, ctx);
+        let engine = Engine::new(filer, argus.verbose, ctx, surface_format);
 
         let mut state = State {
             argus,
@@ -517,6 +517,7 @@ impl State {
         );
 
         renderpass.set_pipeline(&self.render_pipeline);
+
         let ctx = &mut LoraCommandContext {
             device: &self.device,
             queue: &self.queue,
@@ -535,8 +536,10 @@ impl State {
         self.engine.primitive_prerender(&self.primitive_buffer, ctx);
 
         renderpass.draw(0..3, 0..1);
+        self.engine.font_render(&mut renderpass, self.window.scale_factor() as f32, ctx);
 
         drop(renderpass);
+
 
         self.queue.submit(Some(encoder.finish()));
         self.window.pre_present_notify();

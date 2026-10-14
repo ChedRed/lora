@@ -2,6 +2,7 @@ pub mod filer;
 pub mod lora;
 pub mod print;
 pub mod transform;
+pub mod font;
 
 use std::io::Cursor;
 

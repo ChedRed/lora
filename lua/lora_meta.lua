@@ -109,8 +109,14 @@ Lora = {
         stop = function(self) end,
     },
 
-    --- @class Font
-    Font = {},
+    --- @class Text
+    Text = {
+        id = 0,
+        position = { x = 0, y = 0 },
+        bounds = { x = 0, y = 0, w = 0, h = 0 },
+        size = 0,
+        color = 0x0,
+    },
 
 
     --- @return nil
@@ -239,9 +245,11 @@ Lora = {
         --- @param sound string
         --- @return Sound
         sound = function(sound) return Lora.new.sound(sound) end,
-        --- @param font string
-        --- @return Font
-        font = function(font) return Lora.new.font(font) end,
+        --- @param bounds table[number[]]
+        --- @param size number
+        --- @param color number
+        --- @return Text
+        text = function(bounds, size, color) return Lora.new.text(bounds, size, color) end,
     },
 
     draw = {
@@ -267,11 +275,6 @@ Lora = {
         --- @param color number[]
         --- @return nil
         rect = function(x, y, w, h, r, color) end,
-        --- @param x number
-        --- @param y number
-        --- @param text string
-        --- @param font Font | nil
-        text = function(x, y, text, font) end,
     }
 }
 

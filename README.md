@@ -30,18 +30,22 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
 [=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
 [=] lora.new.sound(sound: String) -> lora.Sound
-[ ] lora.new.font(font: String) -> lora.Font
+[ ] lora.new.text(bounds: table[x: number, y: number, w: number, h: number], size: f32, color: u32) -> lora.Text
 
 [=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
 [=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil
 [=] lora.draw.rect(x: number, y: number, w: number, h: number, r: number, color: number[]) -> nil
-[ ] lora.draw.text(x: number, y: number, text: String, font: lora.Font | nil) -> nil
 
 [=] lora.Sound.id -> number
 [=] lora.Sound.play(volume: number, pitch: number) -> nil
 [ ] lora.Sound.loop(count: number) -> nil
 [ ] lora.Sound.fade(time: number, volume: number, pitch: number) -> nil
 [ ] lora.Sound.stop() -> nil
+
+[-] lora.Text.id -> number
+[ ] lora.Text.bounds <-> table[x: number, y: number, w: number, h: number]
+[ ] lora.Text.size <-> number
+[ ] lora.Text.color <-> number
 
 [=] lora.Border.id -> number
 [=] lora.Border.position <-> table[x: number, y: number]
@@ -89,7 +93,7 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 ```
 
 ```
-[ ] Font
+[=] Text
 [=] Shape
 [=] Sound
 [=] Spawner
@@ -100,7 +104,6 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 
 ```
 TODO:
-- Move lora related code into engine.rs, out of main.rs
 - Verify traits (Clone, Copy, etc.)
 - Enforce at least one physics tick before rendering, unless lora.update is not present
 - Add the rest of the functions ([=] and [-] means fully implemented, but [-] is untested/able)
@@ -115,13 +118,8 @@ TODO:
 - Collider layers
 
 - Refactor
-  - Move rendering Objects to separate function
 
 - Either return number, number or { number, number }
-
-- Make texture sampler owned by Main?
-
-- Abstract all render calls into one pipeline, somehow?
 
 - Compiler
 - Make things optional

@@ -3,9 +3,11 @@ pub mod collider;
 pub mod shape;
 pub mod sound;
 pub mod spawner;
+pub mod text;
 
 use chrono::TimeDelta;
 
+use glyphon::TextArea;
 use rapier2d::{prelude::*, utils::PoseOps};
 
 use crossbeam::{
@@ -23,7 +25,7 @@ use rapier2d::{
 };
 use rodio::{Decoder, MixerDeviceSink, Source};
 use std::{io::Cursor, sync::mpsc, thread::JoinHandle};
-use wgpu::naga::FastHashMap;
+use wgpu::{TextureFormat, naga::FastHashMap};
 
 use winit::dpi::PhysicalSize;
 use winit::event::{
@@ -32,20 +34,10 @@ use winit::event::{
 };
 
 use crate::{
-    RESOLUTION,
-    content::{
-        border::{LoraBorder, LoraBorderRef},
-        collider::{LoraCollider, LoraColliderRef},
-        shape::{LoraShape, LoraShapeRef},
-        sound::{LoraSound, LoraSoundRef},
-        spawner::{LoraObjectRef, LoraSpawner, LoraSpawnerRef},
-    },
-    utils::{
-        GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall,
-        MainToLoraCommand, Primitive, Vertex,
-        filer::Filer,
-        get_image,
-        lora::{Lora, LoraCommandContext},
+    RESOLUTION, content::{
+        border::{LoraBorder, LoraBorderRef}, collider::{LoraCollider, LoraColliderRef}, shape::{LoraShape, LoraShapeRef}, sound::{LoraSound, LoraSoundRef}, spawner::{LoraObjectRef, LoraSpawner, LoraSpawnerRef}, text::LoraText,
+    }, utils::{
+        GPUPrimitives, Location, LoraToMainCall, LoraToMainCommand, MainToLoraCall, MainToLoraCommand, Primitive, Vertex, filer::Filer, font::FontGod, get_image, lora::{Lora, LoraCommandContext},
     },
 };
 
@@ -67,6 +59,7 @@ pub struct Engine {
     pub lora_rtrn_rev: Receiver<MainToLoraCommand>,
     pub lora_handle: Option<JoinHandle<()>>,
 
+    pub fontgod: FontGod,
     pub sink: MixerDeviceSink,
     pub primitives: Vec<Primitive>,
 
@@ -75,6 +68,7 @@ pub struct Engine {
     pub lora_colliders: FastHashMap<u128, LoraCollider>,
     pub lora_spawners: FastHashMap<u128, LoraSpawner>,
     pub lora_sounds: FastHashMap<u128, LoraSound>,
+    pub lora_texts: FastHashMap<u128, LoraText>,
     pub uuid: u128,
 
     pub gravity: Vec2,
@@ -94,7 +88,7 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(filer: Filer, verbose: bool, ctx: &mut LoraCommandContext<'_>) -> Self {
+    pub fn new(filer: Filer, verbose: bool, ctx: &mut LoraCommandContext<'_>, format: TextureFormat) -> Self {
         let lua_code: String = filer.read_code();
 
         let sampler = ctx.device.create_sampler(&wgpu::SamplerDescriptor {
@@ -129,6 +123,7 @@ impl Engine {
                 .unwrap(),
         );
 
+        let fontgod: FontGod = FontGod::new(ctx.device, ctx.queue, format);
         let mut sink: MixerDeviceSink = rodio::DeviceSinkBuilder::open_default_sink().unwrap();
         sink.log_on_drop(false);
         let primitives: Vec<Primitive> = Vec::with_capacity(200);
@@ -138,6 +133,7 @@ impl Engine {
         let lora_colliders: FastHashMap<u128, LoraCollider> = FastHashMap::default();
         let lora_spawners: FastHashMap<u128, LoraSpawner> = FastHashMap::default();
         let lora_sounds: FastHashMap<u128, LoraSound> = FastHashMap::default();
+        let lora_texts: FastHashMap<u128, LoraText> = FastHashMap::default();
         let uuid: u128 = 0;
 
         let gravity = Vec2 { x: 0., y: 0. };
@@ -175,6 +171,7 @@ impl Engine {
             lora_rtrn_rev,
             lora_handle,
 
+            fontgod,
             sink,
             primitives,
 
@@ -183,6 +180,7 @@ impl Engine {
             lora_colliders,
             lora_spawners,
             lora_sounds,
+            lora_texts,
             uuid,
 
             gravity,
@@ -344,50 +342,44 @@ impl Engine {
         }
 
         for obj in self.lora_spawners.iter_mut() {
-            if obj.1.renderable() {
-                if let Some(real_vertex_buffer) = &obj.1.vertex_buffer {
-                    if let Some(real_location_buffer) = &obj.1.location_buffer {
-                        if let Some(real_index_buffer) = &obj.1.index_buffer {
-                            for item in obj.1.rigidhandles.iter() {
-                                if let Some(body) = self.rigidbodies.get_mut(*item.1) {
-                                    if let Some(loc) = obj.1.locations.get_mut(item.0) {
-                                        let pose = body.position();
-                                        let pos = pose.translation;
-                                        let rot: f32 = pose.rotation.angle();
-                                        loc.position = [pos.x, pos.y];
-                                        loc.rotation = [rot, 0.];
-                                        body.reset_forces(true);
-                                        body.reset_torques(true);
-                                    }
-                                }
-                            }
-
-                            let locations: Vec<Location> =
-                                obj.1.locations.values().copied().collect();
-                            ctx.queue.write_buffer(
-                                &real_location_buffer,
-                                0,
-                                bytemuck::cast_slice(&locations),
-                            );
-                            renderpass.set_vertex_buffer(0, real_vertex_buffer.slice(..));
-                            renderpass.set_vertex_buffer(1, real_location_buffer.slice(..));
-
-                            if let Some(bindgroup) = &obj.1.texture_bind_group {
-                                renderpass.set_bind_group(1, bindgroup, &[]);
-                            }
-                            renderpass.set_index_buffer(
-                                real_index_buffer.slice(..),
-                                wgpu::IndexFormat::Uint32,
-                            );
-                            renderpass.draw_indexed(
-                                0..obj.1.indices as u32,
-                                0,
-                                0..obj.1.locations.len() as _,
-                            );
-                        }
-                    }
-                }
+            if !obj.1.renderable() { continue }
+            let real_vertex_buffer = &obj.1.vertex_buffer.as_mut().unwrap();
+            let real_location_buffer = &obj.1.location_buffer.as_mut().unwrap();
+            let real_index_buffer = &obj.1.index_buffer.as_mut().unwrap();
+            for item in obj.1.rigidhandles.iter() {
+                let body = self.rigidbodies.get_mut(*item.1).unwrap();
+                let loc = obj.1.locations.get_mut(item.0).unwrap();
+                let pose = body.position();
+                let pos = pose.translation;
+                let rot: f32 = pose.rotation.angle();
+                loc.position = [pos.x, pos.y];
+                loc.rotation = [rot, 0.];
+                body.reset_forces(true);
+                body.reset_torques(true);
             }
+
+            let locations: Vec<Location> =
+                obj.1.locations.values().copied().collect();
+            ctx.queue.write_buffer(
+                &real_location_buffer,
+                0,
+                bytemuck::cast_slice(&locations),
+            );
+            renderpass.set_vertex_buffer(0, real_vertex_buffer.slice(..));
+            renderpass.set_vertex_buffer(1, real_location_buffer.slice(..));
+
+            if let Some(bindgroup) = &obj.1.texture_bind_group {
+                renderpass.set_bind_group(1, bindgroup, &[]);
+            }
+            renderpass.set_index_buffer(
+                real_index_buffer.slice(..),
+                wgpu::IndexFormat::Uint32,
+            );
+            renderpass.draw_indexed(
+                0..obj.1.indices as u32,
+                0,
+                0..obj.1.locations.len() as _,
+            );
         }
     }
 
@@ -406,6 +398,21 @@ impl Engine {
 
         ctx.queue
             .write_buffer(primitive_buffer, 0, &bytemuck::bytes_of(&[primitive_box]));
+    }
+
+    pub fn font_render(&mut self, renderpass: &mut wgpu::RenderPass, scale: f32, ctx: &mut LoraCommandContext<'_>) {
+        let tempfonts = &mut self.fontgod.fonts;
+        let tempatlas = &mut self.fontgod.atlas;
+        let tempswash = &mut self.fontgod.swash;
+
+        self.fontgod.viewport.update(ctx.queue, glyphon::Resolution { width: ctx.size.width, height: ctx.size.height} );
+        let tempviewport = &mut self.fontgod.viewport;
+
+        for item in self.lora_texts.iter_mut() {
+            _= self.fontgod.renderer.prepare(ctx.device, ctx.queue, tempfonts, tempatlas, tempviewport, [TextArea {buffer: &item.1.buffer, left: item.1.position[0], top: item.1.position[1], scale, bounds: item.1.bounds, default_color: item.1.color, custom_glyphs: &[], }], tempswash);
+        }
+
+        _= self.fontgod.renderer.render(tempatlas, tempviewport, renderpass);
     }
 
     pub fn exit(&mut self, ctx: &mut LoraCommandContext<'_>) {
