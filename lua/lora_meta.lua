@@ -112,10 +112,13 @@ Lora = {
     --- @class Text
     Text = {
         id = 0,
-        position = { x = 0, y = 0 },
-        bounds = { x = 0, y = 0, w = 0, h = 0 },
+        data = "",
         size = 0,
         color = 0x0,
+        position = { x = 0, y = 0 },
+        bounds = { x = 0, y = 0, w = 0, h = 0 },
+        wrap = nil,
+        align = nil
     },
 
 
@@ -245,11 +248,15 @@ Lora = {
         --- @param sound string
         --- @return Sound
         sound = function(sound) return Lora.new.sound(sound) end,
-        --- @param bounds table[number[]]
+        --- @param data string
         --- @param size number
         --- @param color number
+        --- @param position table[number[]]
+        --- @param bounds table[number[]] | nil
+        --- @param wrap "word"|"char"|"both" | nil
+        --- @param align "left"|"center"|"right"|"justified"|"end" | nil
         --- @return Text
-        text = function(bounds, size, color) return Lora.new.text(bounds, size, color) end,
+        text = function(data, size, color, position, bounds, wrap, align) return Lora.new.text(data, size, color, position, bounds, wrap, align) end,
     },
 
     draw = {

@@ -1,12 +1,13 @@
-use crossbeam::channel::Sender;
-use glyphon::{Buffer, Color, Metrics, TextBounds};
-use mlua::UserData;
+use crossbeam::channel::{Receiver, Sender};
+use glyphon::{Attrs, Buffer, Color, Metrics, TextBounds, cosmic_text::Align};
+use mlua::{Table, UserData};
 
-use crate::utils::{LoraToMainCommand, font::FontGod};
+use crate::utils::{LoraToMainCommand, MainToLoraCommand, font::FontGod};
 
 pub struct LoraTextRef {
     pub uuid: u128,
     pub tx: Sender<LoraToMainCommand>,
+    pub rx: Receiver<MainToLoraCommand>,
 }
 
 impl UserData for LoraTextRef {
@@ -14,10 +15,9 @@ impl UserData for LoraTextRef {
         fields.add_field_method_get("id", |_, this| Ok(this.uuid));
         fields.add_field_function_get("bounds", |lua, this| {
             let that = this.borrow::<LoraTextRef>().unwrap();
-            _ = that.tx.send(LoraToMainCommand::TextGetBounds {
-                parent_uuid: that.parent_uuid,
-                uuid: that.uuid,
-            });
+            _ = that
+                .tx
+                .send(LoraToMainCommand::TextGetBounds { uuid: that.uuid });
             let mut real_position: [f32; 2] = [0., 0.];
             match that.rx.recv().unwrap() {
                 MainToLoraCommand::ReturnObjectGetWorld { position } => {
@@ -46,7 +46,7 @@ impl UserData for LoraTextRef {
                         let x = this.raw_get::<f32>("x").unwrap_or_default();
                         let y = this.raw_get::<f32>("y").unwrap_or_default();
                         _ = tx2.send(LoraToMainCommand::ObjectSetWorld {
-                            parent_uuid: that.parent_uuid,
+                            parent_uuid: that.uuid,
                             uuid: that.uuid,
                             x,
                             y,
@@ -63,37 +63,62 @@ impl UserData for LoraTextRef {
 
             Ok(pos)
         });
-        fields.add_field_function_get("size", |lua, this| {
-            Ok
-        });
-        fields.add_field_function_get("color", |lua, this| {
-            Ok
-        });
+        // fields.add_field_function_get("size", |lua, this| Ok(()));
+        // fields.add_field_function_get("color", |lua, this| Ok(()));
     }
 }
 
 pub struct LoraText {
     pub buffer: Buffer,
-    pub position: [f32; 2],
-    pub bounds: TextBounds,
+    pub data: String,
+    pub size: f32,
     pub color: Color,
+    pub position: [f32; 2],
+    pub bounds: Option<TextBounds>,
+    pub wrap: u8,  // 0x000: none (undef), 0x001: word, 0x010: char, 0x011: both
+    pub align: u8, // 0x000: left (undef), 0x001: center, 0x010: right, 0x011: justified, 0x100: end
 }
 
 impl LoraText {
-    pub fn new(fontgod: &mut FontGod, text_bounds: [f32; 4], font_size: f32, color: u32) -> Self {
+    pub fn new(
+        fontgod: &mut FontGod,
+        data: String,
+        size: f32,
+        color: u32,
+        position: [f32; 2],
+        text_bounds: Option<[f32; 4]>,
+        wrap: u8,
+        align: u8,
+    ) -> Self {
+        let mut buffer = Buffer::new(&mut fontgod.fonts, Metrics::relative(size, 1.)); // TODO: Allow wrap and line height to be defined
+        buffer.set_text(
+            data.as_str(),
+            &Attrs::new(),
+            glyphon::Shaping::Advanced,
+            Some(Align::Left),
+        );
 
-        let buffer = Buffer::new(&mut fontgod.fonts, Metrics::relative(font_size, 1.)); // TODO: Allow wrap and line height to be defined
+        let mut bounds = Some(TextBounds::default());
+        if let Some(prebounds) = text_bounds {
+            bounds = Some(TextBounds {
+                left: prebounds[0] as i32,
+                top: prebounds[1] as i32,
+                right: prebounds[2] as i32,
+                bottom: prebounds[3] as i32,
+            })
+        }
 
-        let position: [f32; 2] = [text_bounds[0], text_bounds[1]];
-        let bounds = TextBounds::default();
-
-        let color = Color {0: color};
+        let color = Color { 0: color };
 
         Self {
             buffer,
+            data,
             position,
             bounds,
+            size,
             color,
+            wrap,
+            align,
         }
     }
 }

@@ -1,8 +1,8 @@
 pub mod filer;
+pub mod font;
 pub mod lora;
 pub mod print;
 pub mod transform;
-pub mod font;
 
 use std::io::Cursor;
 
@@ -198,6 +198,9 @@ pub enum LoraToMainCommand {
     },
     ObjectToggle {
         parent_uuid: u128,
+        uuid: u128,
+    },
+    TextGetBounds {
         uuid: u128,
     },
     SoundPlay {

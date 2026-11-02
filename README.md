@@ -29,8 +29,8 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [=] lora.new.mesh(vertices: [number[]], indices: int[] | nil) -> lora.Shape
 [=] lora.new.collider(shape: lora.Shape, collision: string("static"|"diaxial"|"dynamic")) -> lora.Collider
 [=] lora.new.spawner(shape: lora.Shape | nil, collider: lora.Collider | nil) -> lora.Spawner
-[=] lora.new.sound(sound: String) -> lora.Sound
-[ ] lora.new.text(bounds: table[x: number, y: number, w: number, h: number], size: f32, color: u32) -> lora.Text
+[=] lora.new.sound(sound: string) -> lora.Sound
+[ ] lora.new.text(data: string, position: table[x: number, y: number], bounds: table[x: number, y: number, w: number, h: number] | nil, size: f32, color: u32, wrap: "word"|"char"|"both" | nil) -> lora.Text
 
 [=] lora.draw.line(x1: number, y1: number, x2: number, y2: number, color: number[]) -> nil
 [=] lora.draw.circle(x: number, y: number, radius: number, color: number[]) -> nil
@@ -43,9 +43,13 @@ Functions with '=' or '-' are implemented, with '-' meaning untested.
 [ ] lora.Sound.stop() -> nil
 
 [-] lora.Text.id -> number
+[ ] lora.Text.data <-> string
+[ ] lora.Text.position <-> table[x: number, y: number]
 [ ] lora.Text.bounds <-> table[x: number, y: number, w: number, h: number]
 [ ] lora.Text.size <-> number
 [ ] lora.Text.color <-> number
+[ ] lora.Text.wrap <-> "word"|"char"|"both" | nil
+
 
 [=] lora.Border.id -> number
 [=] lora.Border.position <-> table[x: number, y: number]
