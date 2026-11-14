@@ -26,7 +26,7 @@ struct VertexOutput {
 
 fn rotate(center: vec2<f32>, position: vec2<f32>, rotation: f32) -> vec2<f32> {
     var prerot: f32 = atan2(position.y-center.y, position.x-center.x) + rotation;
-    var premag: f32 = sqrt(pow(position.x-center.x,2)+pow(position.y-center.y,2));
+    var premag: f32 = length(position - center);
     var rotpos: vec2<f32> = vec2<f32>(cos(prerot), sin(prerot));
     var prepos: vec2<f32> = center + (rotpos*premag);
     return prepos;
